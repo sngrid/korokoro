@@ -1,0 +1,921 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<title>フォトコロコロ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+/* Layout: full-screen 3D sky course; HUD chips + progress ribbon on top, thumb controls at the bottom, cards float over the scene. Single committed look: pastel cotton-cloud sky. */
+:root {
+  --ink: #6a4c7d;
+  --ink-soft: #9a83ab;
+  --pink: #ff8fbf;
+  --pink-deep: #e9679f;
+  --mint: #8fe0c6;
+  --lemon: #ffe58a;
+  --cream: #fffaf5;
+  --lav: #d9ccff;
+  --font-display: "Mochiy Pop One", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: light;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #bfe6ff 0%, #e6dcff 42%, #ffe1ef 72%, #fff3f8 100%);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#app { position: relative; height: 100%; overflow: hidden; }
+#game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+.hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+.hud-row { display: flex; justify-content: space-between; gap: 8px; }
+.chip {
+  background: rgba(255, 250, 245, .86);
+  border: 2px solid #fff;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: 800 15px/1.2 var(--font-body);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 3px 0 rgba(233, 103, 159, .18);
+  white-space: nowrap;
+}
+.chip.star { color: #d39a00; }
+.prog {
+  position: relative; height: 16px; border-radius: 999px;
+  background: rgba(255, 250, 245, .7); border: 2px solid #fff; overflow: visible;
+}
+.prog-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink), #ffc38f, var(--lemon), var(--mint), #9fd4ff, var(--lav)); }
+.prog-ball { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; left: 0%;
+  border-radius: 50%; background: var(--cream); border: 3px solid var(--pink-deep); }
+.prog-flag { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: 400 10px/1 var(--font-display); color: var(--pink-deep); }
+
+.controls {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 10px;
+  padding: 10px max(12px, env(safe-area-inset-right, 0px)) 16px max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+.controls .left { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pointer-events: auto; }
+.btn {
+  font: 800 14px/1 var(--font-body);
+  color: var(--ink);
+  background: var(--cream);
+  border: 2px solid #fff;
+  border-radius: 999px;
+  padding: 11px 15px;
+  box-shadow: 0 4px 0 rgba(154, 131, 171, .35);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(154, 131, 171, .35); }
+.btn:focus-visible, .jump:focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; }
+.btn.primary { background: var(--pink); color: #fff; border-color: #ffd0e4; box-shadow: 0 4px 0 var(--pink-deep); }
+.btn.mint { background: var(--mint); color: #2f6b5a; border-color: #d2f6ea; box-shadow: 0 4px 0 #5fbfa0; }
+.btn.wide { width: 100%; padding: 15px; font-size: 16px; }
+.mode { font: 800 12px/1 var(--font-body); color: var(--ink-soft); background: rgba(255,250,245,.7); padding: 6px 10px; border-radius: 999px; }
+.jump {
+  pointer-events: auto;
+  width: 92px; height: 92px; border-radius: 50%;
+  font: 400 16px/1 var(--font-display); white-space: nowrap; padding: 0;
+  background: radial-gradient(circle at 35% 30%, #ffd1e5, var(--pink) 60%);
+  color: #fff; text-shadow: 0 2px 0 var(--pink-deep);
+  border: 4px solid #fff;
+  box-shadow: 0 6px 0 var(--pink-deep), 0 10px 18px rgba(233, 103, 159, .3);
+  touch-action: none; cursor: pointer;
+}
+.jump:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-deep); }
+
+#joy { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.85); background: rgba(255,255,255,.18); pointer-events: none; }
+#joy i { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  background: var(--pink); border: 3px solid #fff; }
+
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px));
+  overflow-y: auto;
+}
+.overlay.center { justify-content: center; background: rgba(255, 240, 248, .45); }
+.card {
+  width: min(380px, 100%);
+  background: rgba(255, 250, 245, .94);
+  border: 3px solid #fff;
+  border-radius: 28px;
+  padding: 20px 18px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+  text-align: center;
+  box-shadow: 0 8px 0 rgba(233, 103, 159, .18), 0 18px 40px rgba(154, 131, 171, .25);
+}
+.logo { font: 400 32px/1.15 var(--font-display); color: var(--pink-deep); letter-spacing: .02em; text-wrap: balance;
+  text-shadow: 0 3px 0 #fff, 0 5px 0 rgba(233,103,159,.2); }
+.logo span { color: #f2a93b; }
+.sub { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-soft); text-wrap: pretty; }
+.row { display: flex; gap: 8px; }
+.row > * { flex: 1; }
+.file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+label.btn { display: inline-flex; justify-content: center; align-items: center; }
+.how { margin: 0; padding: 10px 14px; text-align: left; font-size: 12.5px; line-height: 1.8; color: var(--ink);
+  background: #fff0f6; border-radius: 16px; list-style: none; }
+.how b { color: var(--pink-deep); }
+.big { font: 400 46px/1 var(--font-display); color: var(--pink-deep); text-shadow: 0 4px 0 #fff; }
+.result { display: grid; grid-template-columns: auto auto; justify-content: center; gap: 6px 18px; margin: 0;
+  font: 800 17px/1.3 var(--font-body); font-variant-numeric: tabular-nums; }
+.result dt { color: var(--ink-soft); text-align: right; }
+.result dd { margin: 0; text-align: left; }
+
+.toast {
+  position: absolute; left: 50%; top: 92px; transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  background: #fff; color: var(--pink-deep);
+  font: 800 14px/1.5 var(--font-body);
+  padding: 9px 16px; border-radius: 999px;
+  box-shadow: 0 4px 0 rgba(233, 103, 159, .2);
+  pointer-events: none; text-align: center;
+  transition: opacity .25s;
+}
+.toast.off { opacity: 0; }
+#err { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-weight: 800; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div id="app">
+  <canvas id="game" aria-label="ゲーム画面"></canvas>
+
+  <div class="hud" id="hud" hidden>
+    <div class="hud-row">
+      <div class="chip star" id="hudStars">★ 0/0</div>
+      <div class="chip" id="hudTime">0:00.0</div>
+    </div>
+    <div class="prog" aria-hidden="true">
+      <div class="prog-fill" id="progFill"></div>
+      <div class="prog-ball" id="progBall"></div>
+      <div class="prog-flag">GOAL</div>
+    </div>
+  </div>
+
+  <div class="controls" id="controls" hidden>
+    <div class="left">
+      <button class="btn" id="btnPhoto" type="button">写真</button>
+      <button class="btn" id="btnCalib" type="button" hidden>水平リセット</button>
+      <button class="btn" id="btnSound" type="button">音 ON</button>
+      <span class="mode" id="modeLabel"></span>
+    </div>
+    <button class="jump" id="btnJump" type="button">ジャンプ</button>
+  </div>
+
+  <div id="joy" hidden><i></i></div>
+  <div class="toast off" id="toast" role="status"></div>
+
+  <div class="overlay" id="titleOv">
+    <div class="card">
+      <div class="logo">フォト<span>コロコロ</span></div>
+      <p class="sub">わたぐもの空にうかぶ長い一本道。スマホを傾けて、顔ボールをゴールの虹まで転がそう。</p>
+      <div class="row">
+        <label class="btn mint" for="fileInput">顔写真をえらぶ</label>
+        <button class="btn" id="btnResetPhoto" type="button">元の顔にもどす</button>
+      </div>
+      <input class="file" id="fileInput" type="file" accept="image/*">
+      <ul class="how">
+        <li><b>傾ける</b>：奥に倒すと前へ進む（持った角度が水平）</li>
+        <li><b>手前にクイッと振る／ジャンプ</b>：すき間を飛びこえる</li>
+        <li>落ちても<b>旗</b>のところから再開。顔が真ん中の写真がおすすめ</li>
+      </ul>
+      <button class="btn primary wide" id="btnTilt" type="button">傾きであそぶ</button>
+      <button class="btn wide" id="btnTouch" type="button">タッチ操作であそぶ</button>
+    </div>
+  </div>
+
+  <div class="overlay center" id="clearOv" hidden>
+    <div class="card">
+      <div class="big">GOAL!</div>
+      <dl class="result">
+        <dt>タイム</dt><dd id="resTime">-</dd>
+        <dt>スター</dt><dd id="resStars">-</dd>
+        <dt>ベスト</dt><dd id="resBest">-</dd>
+        <dt>落ちた回数</dt><dd id="resMiss">-</dd>
+      </dl>
+      <button class="btn primary wide" id="btnRetry" type="button">もう一度あそぶ</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+if (!window.THREE) { document.body.insertAdjacentHTML('beforeend', '<div id="err">3D表示の読み込みに失敗しました。通信環境を確認して再読み込みしてください。</div>'); return; }
+
+const TAU = Math.PI * 2;
+const R = 1;               // ball radius
+const ACC = 26, FRICTION = 0.9, MAX_V = 15;
+const JUMP_V = 10.5, GRAV = 28;
+const MAX_TILT = 22;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+
+/* ---------- three setup ---------- */
+const cvs = $('#game');
+const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: true, alpha: true });
+renderer.setClearColor(0x000000, 0);
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xf7e2f4, 45, 150);
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
+
+scene.add(new THREE.HemisphereLight(0xfff4fb, 0xd8c8ff, 0.62));
+scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 50 });
+sun.shadow.bias = -0.0015;
+scene.add(sun, sun.target);
+
+/* ---------- face ball ---------- */
+const faceCanvas = document.createElement('canvas'); faceCanvas.width = faceCanvas.height = 512;
+const faceTex = new THREE.CanvasTexture(faceCanvas);
+faceTex.minFilter = THREE.LinearFilter; faceTex.generateMipmaps = false;
+const DISC = 0.42; // front hemisphere maps to a disc of this uv radius
+
+function drawDefaultFace(g, c, r) {
+  g.fillStyle = '#ffd6c6'; g.fillRect(0, 0, 512, 512);
+  g.fillStyle = '#4a3357';
+  g.beginPath(); g.ellipse(c - r * .3, c - r * .08, r * .07, r * .13, 0, 0, TAU); g.fill();
+  g.beginPath(); g.ellipse(c + r * .3, c - r * .08, r * .07, r * .13, 0, 0, TAU); g.fill();
+  g.fillStyle = '#fff';
+  g.beginPath(); g.arc(c - r * .28, c - r * .14, r * .03, 0, TAU); g.arc(c + r * .32, c - r * .14, r * .03, 0, TAU); g.fill();
+  g.fillStyle = 'rgba(255, 120, 170, .55)';
+  g.beginPath(); g.ellipse(c - r * .5, c + r * .14, r * .13, r * .07, 0, 0, TAU); g.ellipse(c + r * .5, c + r * .14, r * .13, r * .07, 0, 0, TAU); g.fill();
+  g.strokeStyle = '#4a3357'; g.lineWidth = r * .045; g.lineCap = 'round';
+  g.beginPath(); g.arc(c, c + r * .1, r * .14, .15 * Math.PI, .85 * Math.PI); g.stroke();
+}
+
+function buildFace(img) {
+  const g = faceCanvas.getContext('2d');
+  const S = 512, c = S / 2, r = DISC * S;
+  let bg = [255, 214, 198];
+  let crop = null;
+  if (img) {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    const s = Math.min(w, h) * 0.92;
+    crop = { sx: (w - s) / 2, sy: (h - s) / 2, s };
+    // back of the head takes the average colour of the photo's outer ring
+    const t = document.createElement('canvas'); t.width = t.height = 32;
+    const tg = t.getContext('2d');
+    tg.drawImage(img, crop.sx, crop.sy, s, s, 0, 0, 32, 32);
+    const d = tg.getImageData(0, 0, 32, 32).data;
+    let rr = 0, gg = 0, bb = 0, n = 0;
+    for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+      const dx = x - 15.5, dy = y - 15.5, q = Math.hypot(dx, dy);
+      if (q < 12 || q > 16) continue;
+      const i = (y * 32 + x) * 4; rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++;
+    }
+    if (n) bg = [rr / n, gg / n, bb / n].map(Math.round);
+  }
+  const bgc = `rgb(${bg.join(',')})`;
+  g.fillStyle = bgc; g.fillRect(0, 0, S, S);
+  g.save(); g.beginPath(); g.arc(c, c, r, 0, TAU); g.clip();
+  if (img) g.drawImage(img, crop.sx, crop.sy, crop.s, crop.s, c - r, c - r, r * 2, r * 2);
+  else drawDefaultFace(g, c, r);
+  g.restore();
+  const fe = g.createRadialGradient(c, c, r * .84, c, c, r * 1.01);
+  fe.addColorStop(0, `rgba(${bg.join(',')},0)`); fe.addColorStop(1, `rgba(${bg.join(',')},1)`);
+  g.fillStyle = fe; g.fillRect(0, 0, S, S);
+  faceTex.needsUpdate = true;
+}
+
+const ballMat = new THREE.MeshPhongMaterial({ map: faceTex, shininess: 40, specular: 0x333333 });
+// Map the photo onto the front hemisphere by projecting along the ball's local +Z, so a face bulges like a 3D head.
+ballMat.onBeforeCompile = (sh) => {
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nvarying vec3 vObjPos;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvObjPos = position;');
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', '#include <common>\nvarying vec3 vObjPos;')
+    .replace('#include <map_fragment>', `
+      vec3 sp = normalize(vObjPos);
+      float rxy = length(sp.xy);
+      vec2 dir = rxy > 1e-4 ? sp.xy / rxy : vec2(1.0, 0.0);
+      float rho = sp.z >= 0.0 ? rxy * ${DISC.toFixed(3)} : ${DISC.toFixed(3)} + (-sp.z) * 0.07;
+      vec4 texelColor = texture2D(map, vec2(0.5) + dir * rho);
+      texelColor = mapTexelToLinear(texelColor);
+      diffuseColor *= texelColor;`);
+};
+ballMat.customProgramCacheKey = () => 'faceball';
+const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 32), ballMat);
+ballMesh.castShadow = true;
+scene.add(ballMesh);
+
+function loadPhoto(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    buildFace(img);
+    URL.revokeObjectURL(url);
+    store.set('fc3-face', faceCanvas.toDataURL('image/jpeg', 0.86));
+    ballMesh.quaternion.identity();
+    toast('顔ボールができました！');
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('この画像は読み込めませんでした。JPEGかPNGを選んでください'); };
+  img.src = url;
+}
+function restoreFace() {
+  const d = store.get('fc3-face');
+  if (!d) return;
+  const img = new Image();
+  img.onload = () => { faceCanvas.getContext('2d').drawImage(img, 0, 0, 512, 512); faceTex.needsUpdate = true; };
+  img.src = d;
+}
+
+/* ---------- course ---------- */
+const ZONE = { pink: 0xffbfd8, mint: 0xaeeed8, lemon: 0xffeaa6, lav: 0xd3c4ff, peach: 0xffcdb0, sky: 0xaedcff };
+const P = [], FENCES = [], STARS = [], BUMPERS = [], CPS = [];
+let cz = 12, lastX = 0, zoneCol = ZONE.pink, goalZ = 0, startZ = 0;
+
+function zone(c) { zoneCol = ZONE[c]; }
+function seg(len, w, x = 0, o = {}) {
+  const p = { bx: x, x, z: cz - len / 2, hw: w / 2, hd: len / 2, col: o.col || zoneCol, mv: o.mv || null, dx: 0 };
+  P.push(p); const z0 = cz; cz -= len; lastX = x;
+  return { z0, z1: cz, p };
+}
+function gap(d) { cz -= d; }
+function star(x, z, y = 1.3) { STARS.push({ x, y, z }); }
+function hop(d, len, w, x, o) { star((lastX + x) / 2, cz - d / 2, 3.0); gap(d); return seg(len, w, x, o); }
+function starLine(x0, z0, x1, z1, n, y) { for (let i = 0; i < n; i++) { const t = n === 1 ? .5 : i / (n - 1); star(x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, y); } }
+function fence(s) {
+  const p = s.p;
+  FENCES.push({ x: p.x - p.hw + .15, z: p.z, hw: .15, hd: p.hd }, { x: p.x + p.hw - .15, z: p.z, hw: .15, hd: p.hd });
+}
+function bumper(x, z) { BUMPERS.push({ x, z, r: .95, hit: 0 }); }
+function checkpoint(x, z) { CPS.push({ x, z, on: false }); }
+function curvy(n, len, w, amp, freq, every = 2) {
+  for (let i = 0; i < n; i++) { const x = Math.sin(i * freq) * amp; seg(len, w, x); if (i % every === 0) star(x, cz + len / 2); }
+}
+
+function buildCourse() {
+  zone('pink');
+  let s = seg(40, 12);                    checkpoint(0, 6); startZ = 6;
+  starLine(0, -2, 0, -24, 5);
+  s = seg(16, 6);                         starLine(0, s.z0 - 3, 0, s.z1 + 3, 3);
+  curvy(14, 4, 5.5, 4.5, .45);
+  s = seg(12, 9);
+  zone('mint');
+  checkpoint(0, s.z1 + 5);
+  hop(3.5, 5, 5, 0); hop(3.5, 5, 5, -3); hop(4, 5, 5, 3); hop(4, 5, 5, 0);
+  s = hop(3.5, 16, 10, 0);                starLine(-2, s.z0 - 4, 2, s.z1 + 4, 3);
+  curvy(10, 4, 5, 3.5, .7);
+  s = seg(12, 10);                        checkpoint(0, s.z1 + 6);
+  zone('lemon');
+  s = seg(46, 14);
+  for (let i = 0, z = s.z0 - 9; z > s.z1 + 7; i++, z -= 7) {
+    const xs = i % 2 ? [-3.2, 3.2] : [-5, 0, 5];
+    xs.forEach(x => bumper(x, z));
+    star(i % 2 ? 0 : -2.5, z - 3.5); star(i % 2 ? 0 : 2.5, z - 3.5);
+  }
+  s = seg(14, 3.2);                       fence(s); starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
+  s = seg(8, 9);
+  zone('lav');
+  hop(3, 6, 5, 0, { mv: { amp: 3.5, spd: 1.1, ph: 0 } });
+  hop(2.5, 6, 5, 0, { mv: { amp: 3.5, spd: 1.4, ph: 2 } });
+  hop(2.5, 6, 5, 0, { mv: { amp: 4, spd: 1.0, ph: 4 } });
+  s = hop(3, 14, 10, 0);                  checkpoint(0, s.z1 + 6);
+  curvy(16, 3.5, 4.5, 5, .5);
+  s = seg(10, 9);
+  zone('peach');
+  s = seg(18, 2.6, 0);                    starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
+  seg(4, 8, 1.5);
+  s = seg(18, 2.6, 3);                    starLine(3, s.z0 - 2, 3, s.z1 + 2, 4);
+  seg(4, 8, 0);
+  s = seg(18, 2.6, -3);                   starLine(-3, s.z0 - 2, -3, s.z1 + 2, 4);
+  seg(4, 8, -1.5);
+  s = seg(14, 2.6, 0);
+  s = seg(12, 9);                         checkpoint(0, s.z1 + 6);
+  zone('sky');
+  curvy(18, 3.5, 4.2, 6, .5);
+  hop(4, 5, 5, 0); hop(4, 6, 5, 0, { mv: { amp: 3, spd: 1.6, ph: 1 } }); hop(4, 5, 5, -2); hop(4, 6, 5, 2, { mv: { amp: 2.5, spd: 1.9, ph: 3 } });
+  s = hop(4, 14, 10, 0);                  checkpoint(0, s.z1 + 6);
+  zone('pink');
+  s = seg(40, 8);                         fence(s);
+  for (let i = 0, z = s.z0 - 7; z > s.z1 + 5; i++, z -= 6) { bumper(i % 2 ? 1.8 : -1.8, z); star(i % 2 ? -1.8 : 1.8, z); }
+  hop(3.5, 4, 4, -2); hop(3.5, 4, 4, 2); hop(3.5, 4, 4, -2);
+  s = hop(3.5, 26, 16, 0);
+  starLine(-4, s.z0 - 4, 4, s.z0 - 4, 5);
+  goalZ = s.z0 - 14;
+}
+buildCourse();
+
+/* ---------- course meshes ---------- */
+const puffGeo = new THREE.IcosahedronGeometry(1, 2);
+const puffMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xfff0f7, emissiveIntensity: .32 });
+const puffs = [];
+const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+
+function puffRing(p, arr) {
+  const step = 2.3;
+  const edges = [];
+  for (let z = -p.hd; z <= p.hd; z += step) edges.push([-p.hw, z], [p.hw, z]);
+  for (let x = -p.hw + step; x < p.hw; x += step) edges.push([x, -p.hd], [x, p.hd]);
+  for (const [ex, ez] of edges) arr.push({ x: ex + (rnd() - .5) * .4, y: -1.2 - rnd() * .3, z: ez + (rnd() - .5) * .4, s: .85 + rnd() * .55 });
+  for (let z = -p.hd + 1.5; z < p.hd; z += 4) { const s = Math.min(p.hw, 2.6) + rnd(); arr.push({ x: (rnd() - .5) * p.hw, y: -1.3 - s * .8, z, s }); }
+}
+
+for (const p of P) {
+  const g = new THREE.Group();
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(p.hw * 2, 1, p.hd * 2), new THREE.MeshLambertMaterial({ color: p.col }));
+  slab.position.y = -.5; slab.receiveShadow = true; g.add(slab);
+  const icing = new THREE.Mesh(new THREE.BoxGeometry(p.hw * 2 - .5, .06, p.hd * 2 - .5), new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: .2 }));
+  icing.position.y = .03; icing.receiveShadow = true; g.add(icing);
+  const local = []; puffRing(p, local);
+  if (p.mv) {
+    for (const q of local) { const m = new THREE.Mesh(puffGeo, puffMat); m.position.set(q.x, q.y, q.z); m.scale.setScalar(q.s); g.add(m); }
+  } else {
+    for (const q of local) puffs.push({ x: q.x + p.x, y: q.y, z: q.z + p.z, s: q.s });
+  }
+  g.position.set(p.x, 0, p.z);
+  p.mesh = g; scene.add(g);
+}
+// sea of clouds below and big clouds on the sides
+for (let z = 30; z > goalZ - 80; z -= 5) {
+  for (let k = 0; k < 3; k++) {
+    const side = rnd() < .5 ? -1 : 1;
+    puffs.push({ x: side * (6 + rnd() * 40), y: -10 + rnd() * 4, z: z + rnd() * 5, s: 3 + rnd() * 4 });
+  }
+  if (rnd() < .35) {
+    const side = rnd() < .5 ? -1 : 1, x = side * (24 + rnd() * 26), y = rnd() * 9 - 1, s = 3 + rnd() * 3;
+    for (let k = 0; k < 4; k++) puffs.push({ x: x + (k - 1.5) * s * .8, y: y + (k % 2) * s * .4, z: z + rnd() * 2, s: s * (.7 + rnd() * .5) });
+  }
+}
+{
+  const inst = new THREE.InstancedMesh(puffGeo, puffMat, puffs.length);
+  const m = new THREE.Matrix4();
+  puffs.forEach((q, i) => { m.makeScale(q.s, q.s * .8, q.s); m.setPosition(q.x, q.y, q.z); inst.setMatrixAt(i, m); });
+  scene.add(inst);
+}
+
+// fences
+const fenceMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+for (const f of FENCES) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(f.hw * 2, .7, f.hd * 2), fenceMat);
+  m.position.set(f.x, .35, f.z); m.castShadow = true; scene.add(m);
+}
+
+// stars
+const starShape = new THREE.Shape();
+for (let i = 0; i < 10; i++) {
+  const r = i % 2 ? .28 : .62, a = i * Math.PI / 5 + Math.PI / 2;
+  const x = Math.cos(a) * r, y = Math.sin(a) * r;
+  i ? starShape.lineTo(x, y) : starShape.moveTo(x, y);
+}
+const starGeo = new THREE.ExtrudeGeometry(starShape, { depth: .18, bevelEnabled: true, bevelThickness: .08, bevelSize: .07, bevelSegments: 2 });
+starGeo.center();
+const starMat = new THREE.MeshLambertMaterial({ color: 0xffe066, emissive: 0xffb300, emissiveIntensity: .35 });
+for (const s of STARS) {
+  s.mesh = new THREE.Mesh(starGeo, starMat);
+  s.mesh.position.set(s.x, s.y, s.z); s.ph = rnd() * TAU; s.got = false; s.t = 0;
+  scene.add(s.mesh);
+}
+
+// bumpers
+const bumpGeo = new THREE.CylinderGeometry(.95, 1.05, 1.1, 24);
+const bumpMat = new THREE.MeshLambertMaterial({ color: 0xff9cc6 });
+const bumpTopMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+for (const b of BUMPERS) {
+  const g = new THREE.Group();
+  const c = new THREE.Mesh(bumpGeo, bumpMat); c.position.y = .55; c.castShadow = true; g.add(c);
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .12, 24), bumpTopMat); t.position.y = 1.12; g.add(t);
+  g.position.set(b.x, 0, b.z); b.mesh = g; scene.add(g);
+}
+
+// checkpoint flags
+const poleMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+const flagGeo = new THREE.BufferGeometry();
+flagGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -1, 0, 1.4, -.5, 0], 3));
+flagGeo.computeVertexNormals();
+for (const c of CPS) {
+  const g = new THREE.Group();
+  for (const side of [-1, 1]) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, 3, 8), poleMat);
+    pole.position.set(side * 3.6, 1.5, 0); g.add(pole);
+    const fm = new THREE.MeshLambertMaterial({ color: 0xd3c4ff, side: THREE.DoubleSide });
+    const flag = new THREE.Mesh(flagGeo, fm);
+    flag.position.set(side * 3.6, 3, 0); flag.scale.x = side < 0 ? 1 : -1; g.add(flag);
+    (c.flags = c.flags || []).push(fm);
+  }
+  g.position.set(c.x, 0, c.z); scene.add(g);
+}
+
+// goal rainbow
+{
+  const cols = [0xffb3c7, 0xffcfa3, 0xfff0a0, 0xb9f0cf, 0xaedcff, 0xd3c4ff];
+  cols.forEach((c, i) => {
+    const t = new THREE.Mesh(new THREE.TorusGeometry(7.2 - i * .42, .22, 10, 48, Math.PI), new THREE.MeshLambertMaterial({ color: c, emissive: c, emissiveIntensity: .25 }));
+    t.position.set(0, 0, goalZ); scene.add(t);
+  });
+  const gpad = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, .1, 40), new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xfff4c2, emissiveIntensity: .5 }));
+  gpad.position.set(0, .05, goalZ); scene.add(gpad);
+}
+
+/* ---------- state ---------- */
+let state = 'title';
+let timer = 0, collected = 0, misses = 0, tAnim = 0, cpIdx = 0;
+let onGround = true, groundP = null;
+const ball = { x: 0, y: R, z: startZ, vx: 0, vy: 0, vz: 0 };
+const camPos = new THREE.Vector3(0, 3, startZ + 6), camLook = new THREE.Vector3(0, 1, startZ);
+
+function respawn() {
+  const c = CPS[cpIdx];
+  Object.assign(ball, { x: c.x, y: R, z: c.z, vx: 0, vy: 0, vz: 0 });
+  ballMesh.quaternion.identity();
+  onGround = true;
+}
+function resetRun() {
+  timer = 0; collected = 0; misses = 0; cpIdx = 0;
+  for (const s of STARS) { s.got = false; s.t = 0; s.mesh.visible = true; s.mesh.scale.setScalar(1); }
+  CPS.forEach((c, i) => { c.on = i === 0; c.flags.forEach(f => f.color.setHex(i === 0 ? 0x8fe0c6 : 0xd3c4ff)); });
+  respawn();
+}
+
+/* ---------- input ---------- */
+const input = { x: 0, y: 0 };
+const keys = new Set();
+let mode = 'touch';
+let ori = null, base = { x: 0, y: 0 }, gotOri = false, needCalib = true;
+let joy = null, lastJumpAt = 0;
+const joyEl = $('#joy'), joyKnob = joyEl.querySelector('i');
+
+function screenAngle() {
+  const a = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0);
+  return ((a % 360) + 360) % 360;
+}
+function mapTilt(beta, gamma) {
+  switch (screenAngle()) {
+    case 90: return { x: beta, y: -gamma };
+    case 270: return { x: -beta, y: gamma };
+    case 180: return { x: -gamma, y: -beta };
+    default: return { x: gamma, y: beta };
+  }
+}
+function onOri(e) {
+  if (e.beta == null || e.gamma == null) return;
+  gotOri = true;
+  ori = mapTilt(e.beta, e.gamma);
+  if (needCalib) { base = { ...ori }; needCalib = false; }
+}
+function onMotion(e) {
+  const a = e.acceleration;
+  if (!a || a.z == null || mode !== 'tilt') return;
+  if (a.z > 13) jump();
+}
+function calibrate() { if (ori) base = { ...ori }; else needCalib = true; toast('今の角度を水平にしました'); }
+
+async function enableTilt() {
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const r = await DeviceOrientationEvent.requestPermission();
+      if (r !== 'granted') return false;
+    }
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try { await DeviceMotionEvent.requestPermission(); } catch {}
+    }
+  } catch { return false; }
+  addEventListener('deviceorientation', onOri);
+  addEventListener('devicemotion', onMotion);
+  await new Promise(r => setTimeout(r, 1200));
+  return gotOri;
+}
+
+function readInput() {
+  let x = 0, y = 0;
+  if (mode === 'tilt' && ori) {
+    const dz = 1.5;
+    const f = (d) => Math.abs(d) < dz ? 0 : (d - Math.sign(d) * dz) / MAX_TILT;
+    x += f(ori.x - base.x); y += f(ori.y - base.y);
+  }
+  if (joy) { x += joy.x; y += joy.y; }
+  if (keys.has('ArrowLeft') || keys.has('KeyA')) x -= 1;
+  if (keys.has('ArrowRight') || keys.has('KeyD')) x += 1;
+  if (keys.has('ArrowUp') || keys.has('KeyW')) y -= 1;
+  if (keys.has('ArrowDown') || keys.has('KeyS')) y += 1;
+  input.x = Math.max(-1, Math.min(1, x));
+  input.y = Math.max(-1, Math.min(1, y));
+}
+
+cvs.addEventListener('pointerdown', (e) => {
+  if (state !== 'play') return;
+  cvs.setPointerCapture(e.pointerId);
+  joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0, t0: performance.now(), moved: false };
+  if (mode === 'touch') {
+    const r = cvs.getBoundingClientRect();
+    joyEl.style.left = (e.clientX - r.left) + 'px'; joyEl.style.top = (e.clientY - r.top) + 'px';
+    joyKnob.style.transform = ''; joyEl.hidden = false;
+  }
+});
+cvs.addEventListener('pointermove', (e) => {
+  if (!joy || e.pointerId !== joy.id) return;
+  const dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+  if (Math.hypot(dx, dy) > 10) joy.moved = true;
+  if (mode === 'touch') {
+    joy.x = Math.max(-1, Math.min(1, dx / 60)); joy.y = Math.max(-1, Math.min(1, dy / 60));
+    joyKnob.style.transform = `translate(${joy.x * 38}px, ${joy.y * 38}px)`;
+  }
+});
+const endJoy = (e) => {
+  if (!joy || e.pointerId !== joy.id) return;
+  if (!joy.moved && performance.now() - joy.t0 < 220) jump();
+  joy = null; joyEl.hidden = true;
+};
+cvs.addEventListener('pointerup', endJoy);
+cvs.addEventListener('pointercancel', endJoy);
+
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
+  if (e.code.startsWith('Arrow')) e.preventDefault();
+  keys.add(e.code);
+});
+addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('blur', () => keys.clear());
+
+/* ---------- sound ---------- */
+let actx = null, soundOn = store.get('fc-sound') !== 'off';
+function beep(freq, dur = .1, type = 'sine', vol = .08, slide = 0) {
+  if (!soundOn || !actx) return;
+  const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + .02);
+}
+const sfx = {
+  star() { beep(1175, .08, 'triangle'); setTimeout(() => beep(1568, .14, 'triangle'), 70); },
+  jump() { beep(420, .16, 'sine', .09, 380); },
+  land() { beep(160, .07, 'sine', .07); },
+  boing() { beep(480, .16, 'sine', .1, 360); },
+  fall() { beep(700, .6, 'sine', .07, -560); },
+  cp() { [784, 988, 1175].forEach((f, i) => setTimeout(() => beep(f, .12, 'triangle'), i * 90)); },
+  goal() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => beep(f, .16, 'triangle'), i * 110)); }
+};
+function updateSoundBtn() { $('#btnSound').textContent = soundOn ? '音 ON' : '音 OFF'; }
+
+/* ---------- physics ---------- */
+function jump() {
+  if (state !== 'play' || !onGround) return;
+  const now = performance.now();
+  if (now - lastJumpAt < 300) return;
+  lastJumpAt = now;
+  ball.vy = JUMP_V; onGround = false; groundP = null;
+  sfx.jump();
+}
+
+function platformUnder(x, z) {
+  for (const p of P) if (Math.abs(x - p.x) <= p.hw + .05 && Math.abs(z - p.z) <= p.hd + .05) return p;
+  return null;
+}
+
+function collideRect(f) {
+  const cx = Math.max(f.x - f.hw, Math.min(ball.x, f.x + f.hw));
+  const cz2 = Math.max(f.z - f.hd, Math.min(ball.z, f.z + f.hd));
+  let dx = ball.x - cx, dz = ball.z - cz2, d = Math.hypot(dx, dz);
+  if (d >= R) return;
+  if (d < 1e-6) { dx = ball.x < f.x ? -1 : 1; dz = 0; d = 1; }
+  const nx = dx / d, nz = dz / d;
+  ball.x = cx + nx * R; ball.z = cz2 + nz * R;
+  const vn = ball.vx * nx + ball.vz * nz;
+  if (vn < 0) { ball.vx -= 1.5 * vn * nx; ball.vz -= 1.5 * vn * nz; }
+}
+
+const qStep = new THREE.Quaternion(), axis = new THREE.Vector3();
+let prevGround = true;
+
+function step(dt) {
+  readInput();
+  timer += dt;
+  for (const p of P) {
+    if (!p.mv) continue;
+    const nx = p.bx + Math.sin(tAnim * p.mv.spd + p.mv.ph) * p.mv.amp;
+    p.dx = nx - p.x; p.x = nx; p.mesh.position.x = nx;
+  }
+
+  const acc = onGround ? ACC : ACC * .45;
+  ball.vx += input.x * acc * dt; ball.vz += input.y * acc * dt;
+  const damp = Math.exp(-(onGround ? FRICTION : .25) * dt);
+  ball.vx *= damp; ball.vz *= damp;
+  const sp = Math.hypot(ball.vx, ball.vz);
+  if (sp > MAX_V) { ball.vx *= MAX_V / sp; ball.vz *= MAX_V / sp; }
+
+  ball.x += ball.vx * dt; ball.z += ball.vz * dt;
+  if (onGround && groundP && groundP.mv) ball.x += groundP.dx;
+
+  if (ball.y < 1.6) for (const f of FENCES) collideRect(f);
+  for (const b of BUMPERS) {
+    b.hit = Math.max(0, b.hit - dt * 4);
+    b.mesh.scale.set(1 + b.hit * .25, 1 - b.hit * .2, 1 + b.hit * .25);
+    if (ball.y > 2.2) continue;
+    const dx = ball.x - b.x, dz = ball.z - b.z, d = Math.hypot(dx, dz);
+    if (d < R + b.r && d > 0) {
+      const nx = dx / d, nz = dz / d;
+      ball.x = b.x + nx * (R + b.r); ball.z = b.z + nz * (R + b.r);
+      const vn = ball.vx * nx + ball.vz * nz;
+      if (vn < 0) { ball.vx -= 2 * vn * nx; ball.vz -= 2 * vn * nz; }
+      const s = Math.max(11, Math.hypot(ball.vx, ball.vz));
+      const s2 = Math.hypot(ball.vx, ball.vz) || 1;
+      ball.vx = ball.vx / s2 * s; ball.vz = ball.vz / s2 * s;
+      b.hit = 1; sfx.boing();
+    }
+  }
+
+  const prevY = ball.y;
+  ball.vy -= GRAV * dt; ball.y += ball.vy * dt;
+  const p = platformUnder(ball.x, ball.z);
+  if (p && ball.y <= R && prevY >= R - .4 && ball.vy <= 0) {
+    if (!prevGround && ball.vy < -8) sfx.land();
+    ball.y = R; ball.vy = 0; onGround = true; groundP = p;
+  } else { onGround = false; groundP = null; }
+  prevGround = onGround;
+
+  // roll the face: rotate around (up x velocity)
+  if (sp > .001) {
+    axis.set(ball.vz, 0, -ball.vx).normalize();
+    qStep.setFromAxisAngle(axis, sp * dt / R);
+    ballMesh.quaternion.premultiply(qStep);
+  }
+
+  for (const s of STARS) {
+    if (s.got) continue;
+    const dx = ball.x - s.x, dy = ball.y - s.y, dz = ball.z - s.z;
+    if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; collected++; sfx.star(); }
+  }
+
+  for (let i = cpIdx + 1; i < CPS.length; i++) {
+    if (ball.z < CPS[i].z && onGround) {
+      cpIdx = i; CPS[i].on = true; CPS[i].flags.forEach(f => f.color.setHex(0x8fe0c6));
+      sfx.cp(); toast('チェックポイント！');
+    }
+  }
+
+  if (ball.y < -14) {
+    misses++; sfx.fall(); respawn();
+    toast('ふわっ… 旗のところから再開');
+  }
+
+  if (ball.z < goalZ && onGround) finish();
+}
+
+function finish() {
+  state = 'clear';
+  sfx.goal();
+  const prev = parseFloat(store.get('fc3-best'));
+  const best = isNaN(prev) ? timer : Math.min(prev, timer);
+  store.set('fc3-best', String(best));
+  $('#resTime').textContent = fmt(timer) + (isNaN(prev) || timer < prev ? '  NEW!' : '');
+  $('#resStars').textContent = `★ ${collected} / ${STARS.length}`;
+  $('#resBest').textContent = fmt(best);
+  $('#resMiss').textContent = `${misses} 回`;
+  setTimeout(() => { $('#clearOv').hidden = false; $('#btnRetry').focus(); }, 900);
+}
+const fmt = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
+
+/* ---------- render ---------- */
+const tmpV = new THREE.Vector3();
+function updateScene(dt) {
+  tAnim += dt;
+  ballMesh.position.set(ball.x, ball.y, ball.z);
+
+  for (const s of STARS) {
+    if (s.got) {
+      if (!s.mesh.visible) continue;
+      s.t += dt;
+      s.mesh.position.y = s.y + s.t * 4; s.mesh.scale.setScalar(Math.max(0, 1.3 - s.t * 2.6));
+      s.mesh.rotation.y += dt * 18;
+      if (s.t > .5) s.mesh.visible = false;
+      continue;
+    }
+    s.mesh.rotation.y = tAnim * 2 + s.ph;
+    s.mesh.position.y = s.y + (REDUCED ? 0 : Math.sin(tAnim * 3 + s.ph) * .15);
+  }
+
+  const k = 1 - Math.exp(-dt * 5);
+  if (state === 'title') {
+    const a = REDUCED ? 0 : Math.sin(tAnim * .6) * .5;
+    ballMesh.quaternion.setFromEuler(new THREE.Euler(0, a, 0));
+    ball.y = R + (REDUCED ? 0 : Math.abs(Math.sin(tAnim * 2.4)) * .35);
+    tmpV.set(ball.x + 1.2, R + .9, ball.z + 7);
+    camPos.lerp(tmpV, k);
+    camLook.lerp(tmpV.set(ball.x, R - 2.4, ball.z), k);
+  } else {
+    tmpV.set(ball.x * .85, Math.max(ball.y, -1) * .5 + 4.4, ball.z + 8.6);
+    camPos.lerp(tmpV, k);
+    camLook.lerp(tmpV.set(ball.x * .9, Math.max(ball.y, -1) * .5 + .4, ball.z - 6), k);
+  }
+  camera.position.copy(camPos);
+  camera.lookAt(camLook);
+
+  sun.position.set(ball.x + 6, 16, ball.z + 4);
+  sun.target.position.set(ball.x, 0, ball.z - 3);
+}
+
+function resize() {
+  const w = cvs.clientWidth, h = cvs.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.fov = w < h ? 62 : 52;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+let lastHud = '';
+function updateHud() {
+  const s = `★ ${collected}/${STARS.length}`, t = fmt(timer);
+  if (s + t !== lastHud) { $('#hudStars').textContent = s; $('#hudTime').textContent = t; lastHud = s + t; }
+  const pr = Math.max(0, Math.min(1, (startZ - ball.z) / (startZ - goalZ))) * 100;
+  $('#progFill').style.width = pr + '%'; $('#progBall').style.left = pr + '%';
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  if (state === 'play') { step(dt / 2); step(dt / 2); }
+  updateScene(dt);
+  updateHud();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- UI ---------- */
+let toastTimer = 0;
+function toast(msg, ms = 2200) {
+  const el = $('#toast');
+  el.textContent = msg; el.classList.remove('off');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.add('off'), ms);
+}
+function setMode(m) {
+  mode = m;
+  $('#btnCalib').hidden = m !== 'tilt';
+  $('#modeLabel').textContent = m === 'tilt' ? '傾き操作' : 'タッチ操作';
+}
+function beginPlay() {
+  $('#titleOv').hidden = true; $('#hud').hidden = false; $('#controls').hidden = false;
+  resetRun();
+  state = 'play';
+  toast(mode === 'tilt' ? 'スマホを奥に倒すと前に転がるよ' : '画面をドラッグした方向に転がるよ。タップでジャンプ', 3000);
+  try { navigator.wakeLock?.request('screen').catch(() => {}); } catch {}
+}
+function initAudio() {
+  if (actx) return;
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { actx = null; }
+}
+
+$('#btnTilt').addEventListener('click', async () => {
+  initAudio();
+  const btn = $('#btnTilt');
+  btn.disabled = true; btn.textContent = 'センサーを確認中…';
+  const ok = await enableTilt();
+  btn.disabled = false; btn.textContent = '傾きであそぶ';
+  if (ok) { needCalib = true; setMode('tilt'); beginPlay(); }
+  else { setMode('touch'); beginPlay(); toast('この環境では傾きセンサーが使えないため、タッチ操作に切り替えました', 4000); }
+});
+$('#btnTouch').addEventListener('click', () => { initAudio(); setMode('touch'); beginPlay(); });
+$('#fileInput').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) loadPhoto(f); e.target.value = ''; });
+$('#btnPhoto').addEventListener('click', () => $('#fileInput').click());
+$('#btnResetPhoto').addEventListener('click', () => { buildFace(null); store.del('fc3-face'); toast('元の顔にもどしました'); });
+$('#btnCalib').addEventListener('click', calibrate);
+$('#btnSound').addEventListener('click', () => { initAudio(); soundOn = !soundOn; store.set('fc-sound', soundOn ? 'on' : 'off'); updateSoundBtn(); });
+$('#btnJump').addEventListener('pointerdown', (e) => { e.preventDefault(); initAudio(); jump(); });
+$('#btnJump').addEventListener('keydown', (e) => { if (e.key === 'Enter') jump(); });
+$('#btnRetry').addEventListener('click', () => { $('#clearOv').hidden = true; resetRun(); state = 'play'; });
+document.addEventListener('visibilitychange', () => { keys.clear(); joy = null; joyEl.hidden = true; });
+
+/* ---------- boot ---------- */
+buildFace(null);
+restoreFace();
+updateSoundBtn();
+setMode('touch');
+resetRun();
+camPos.set(ball.x + 1.2, R + .9, ball.z + 7);
+camLook.set(ball.x, R - 2.4, ball.z);
+resize();
+requestAnimationFrame((t) => { last = t; frame(t); });
+})();
+</script>
+</body></html>
