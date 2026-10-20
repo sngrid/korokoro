@@ -2,7 +2,7 @@
 <title>コロガールの転がる大冒険</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
 /* Layout: full-screen 3D course; HUD chips + progress ribbon on top, thumb controls at the bottom, cards float over the scene. Single committed look: pastel toy world (sky gradient is swapped per stage). */
 :root {
@@ -16,7 +16,7 @@
   --cream: #fff8e1;
   --blue-line: #1e6fd9;
   --lav: #d9ccff;
-  --font-display: "Mochiy Pop One", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
   --font-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   color-scheme: light;
 }
@@ -73,7 +73,7 @@ body {
   background: linear-gradient(90deg, var(--pink), #ffc38f, var(--lemon), var(--mint), #9fd4ff, var(--lav)); }
 .prog-ball { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; left: 0%;
   border-radius: 50%; background: var(--cream); border: 3px solid var(--pink-deep); }
-.prog-flag { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: 400 10px/1 var(--font-display); color: var(--pink-deep); }
+.prog-flag { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: 800 10px/1 var(--font-display); color: var(--pink-deep); }
 
 .controls {
   position: absolute; left: 0; right: 0; bottom: 0;
@@ -103,7 +103,7 @@ body {
 .jump {
   pointer-events: auto;
   width: 92px; height: 92px; border-radius: 50%;
-  font: 400 16px/1 var(--font-display); white-space: nowrap; padding: 0;
+  font: 800 16px/1 var(--font-display); white-space: nowrap; padding: 0;
   background: radial-gradient(circle at 35% 30%, #ffd1e5, var(--pink) 60%);
   color: #fff; text-shadow: 0 2px 0 var(--pink-deep);
   border: 4px solid #fff;
@@ -134,7 +134,7 @@ body {
   text-align: center;
   box-shadow: 0 8px 0 rgba(79, 195, 247, .28), 0 18px 40px rgba(43, 58, 103, .18);
 }
-.logo { font: 400 28px/1.15 var(--font-display); color: var(--pink-deep); letter-spacing: .02em; text-wrap: balance;
+.logo { font: 800 28px/1.15 var(--font-display); color: var(--pink-deep); letter-spacing: .02em; text-wrap: balance;
   text-shadow: 0 3px 0 #fff, 0 5px 0 rgba(233,103,159,.2); }
 .logo span { color: #f2a93b; }
 .brand { width: min(360px, 94vw, 50vh); margin: max(4px, env(safe-area-inset-top, 0px)) auto auto; flex: none; }
@@ -143,7 +143,7 @@ body {
   #titleOv .card { gap: 7px; padding: 12px; }
   #titleOv .btn { padding-top: 10px; padding-bottom: 10px; }
 }
-.h2 { font: 400 22px/1.2 var(--font-display); color: var(--pink-deep); }
+.h2 { font: 800 22px/1.2 var(--font-display); color: var(--pink-deep); }
 .sub { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); text-wrap: pretty; }
 .row { display: flex; gap: 8px; }
 .row > * { flex: 1; }
@@ -164,19 +164,20 @@ label.btn { display: inline-flex; justify-content: center; align-items: center; 
 
 .stage-pick { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; background: #fff0f6; border: 2px solid #fff; border-radius: 20px; cursor: pointer; text-align: left; font: inherit; color: var(--ink); touch-action: manipulation; }
 .stage-pick:focus-visible, .stage-card:focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; }
-.stage-swatch { width: 44px; height: 44px; border-radius: 14px; flex: none; border: 2px solid #fff; box-shadow: 0 2px 0 rgba(154, 131, 171, .3); }
+.stage-swatch { width: 44px; height: 44px; border-radius: 14px; flex: none; border: 2px solid #fff; box-shadow: 0 2px 0 rgba(43, 58, 103, .2); overflow: hidden; }
+.stage-swatch svg { display: block; width: 100%; height: 100%; }
 .stage-text { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
-.stage-name { font: 400 16px/1.2 var(--font-display); color: var(--pink-deep); }
+.stage-name { font: 800 16px/1.2 var(--font-display); color: var(--pink-deep); }
 .stage-change { font: 800 13px/1 var(--font-body); color: var(--ink-soft); white-space: nowrap; }
 .stage-list { display: flex; flex-direction: column; gap: 10px; }
 .stage-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 20px; border: 3px solid #fff; background: #fffaf5; cursor: pointer; text-align: left; font: inherit; color: var(--ink); box-shadow: 0 4px 0 rgba(154, 131, 171, .25); touch-action: manipulation; }
 .stage-card[aria-pressed="true"] { border-color: var(--pink); background: #fff0f6; }
 .stage-card .stage-swatch { width: 64px; height: 64px; }
-.stage-card .no { font: 400 11px/1 var(--font-display); color: var(--ink-soft); letter-spacing: .08em; }
-.stage-card .nm { font: 400 18px/1.25 var(--font-display); color: var(--pink-deep); }
+.stage-card .no { font: 800 11px/1 var(--font-display); color: var(--ink-soft); letter-spacing: .08em; }
+.stage-card .nm { font: 800 18px/1.25 var(--font-display); color: var(--pink-deep); }
 .stage-card .ds { font-size: 12px; line-height: 1.5; color: var(--ink-soft); }
 .stage-card .bt { font: 800 11.5px/1.4 var(--font-body); font-variant-numeric: tabular-nums; }
-.big { font: 400 46px/1 var(--font-display); color: var(--pink-deep); text-shadow: 0 4px 0 #fff; }
+.big { font: 800 46px/1 var(--font-display); color: var(--pink-deep); text-shadow: 0 4px 0 #fff; }
 .result { display: grid; grid-template-columns: auto auto; justify-content: center; gap: 6px 18px; margin: 0;
   font: 800 17px/1.3 var(--font-body); font-variant-numeric: tabular-nums; }
 .result dt { color: var(--ink-soft); text-align: right; }
@@ -690,6 +691,7 @@ const halfSphereGeo = shared(new THREE.SphereGeometry(1, 24, 12, 0, TAU, 0, Math
 /* ---------- stages ---------- */
 const THEMES = {
   sky: {
+    thumb: '<svg viewBox="0 0 64 64"><defs><linearGradient id="tkS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd8ff"/><stop offset="1" stop-color="#ffd6ea"/></linearGradient></defs><rect width="64" height="64" fill="url(#tkS)"/><g fill="none" stroke-width="4.5"><path d="M6 46a26 26 0 0 1 52 0" stroke="#ff8fb1"/><path d="M10.5 46a21.5 21.5 0 0 1 43 0" stroke="#ffd54f"/><path d="M15 46a17 17 0 0 1 34 0" stroke="#8fdcc4"/><path d="M19.5 46a12.5 12.5 0 0 1 25 0" stroke="#4fc3f7"/></g><g fill="#fff"><circle cx="9" cy="50" r="8"/><circle cx="19" cy="47" r="9"/><circle cx="28" cy="53" r="7"/><circle cx="42" cy="53" r="7"/><circle cx="51" cy="47" r="9"/><circle cx="60" cy="51" r="8"/><rect y="52" width="64" height="12"/></g><path d="M32 7l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z" fill="#ffd54f" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="53" cy="14" rx="4.5" ry="5.5" fill="#ff8fb1"/><path d="M53 19.5v6" stroke="#fff" stroke-width="1"/></svg>',
     name: 'わたぐもの空', desc: 'ふわふわの雲の上を転がって、虹のゴールへ', swatch: 'linear-gradient(135deg, #bfe6ff, #ffd6e8)',
     css: 'linear-gradient(180deg, #bfe6ff 0%, #e6dcff 42%, #ffe1ef 72%, #fff3f8 100%)',
     fog: 0xf7e2f4, fogNear: 50, fogFar: 170, hemi: [0xfff4fb, 0xd8c8ff], hemiI: .62, sun: 0xffffff,
@@ -698,6 +700,7 @@ const THEMES = {
     visitorMsg: ['あれ？ なにか近づいてくる…', 'UFOがプレゼントを落としていった！']
   },
   jungle: {
+    thumb: '<svg viewBox="0 0 64 64"><defs><linearGradient id="tkJ" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdeeb0"/><stop offset="1" stop-color="#6fb06a"/></linearGradient></defs><rect width="64" height="64" fill="url(#tkJ)"/><path d="M0 0h20c-2 8-10 14-20 16z" fill="#3f8f4a"/><path d="M64 0H42c3 9 12 15 22 17z" fill="#2f7a40"/><path d="M0 64V40c10 2 16 10 18 24z" fill="#2f7a40"/><path d="M64 64V42c-9 2-15 10-16 22z" fill="#3f8f4a"/><path d="M14 0c4 10 2 22 6 30" stroke="#5a7d3a" stroke-width="2" fill="none"/><g transform="translate(32 38) rotate(-12)"><rect x="-12" y="-13" width="24" height="26" rx="8" fill="#b9733a"/><rect x="-12.5" y="-8" width="25" height="3.2" fill="#3b3a3f"/><rect x="-12.5" y="5" width="25" height="3.2" fill="#3b3a3f"/><path d="M-8-13v26M0-13v26M8-13v26" stroke="#9a5c2c" stroke-width="1.2"/></g><path d="M40 12c6 2 10 8 9 15-2-5-6-9-12-11z" fill="#ffd54f" stroke="#c9961e" stroke-width="1.2" stroke-linejoin="round"/></svg>',
     name: 'ジャングル', desc: 'バナナを集めて、樽大砲で谷をこえよう', swatch: 'linear-gradient(135deg, #4f7f4c, #d8e8c2)',
     css: 'linear-gradient(180deg, #a9cfc0 0%, #d8e8c2 45%, #6f9a70 100%)',
     fog: 0xb4cba8, fogNear: 22, fogFar: 110, hemi: [0xf3ecd0, 0x2f5f35], hemiI: .72, sun: 0xf6e7c0,
@@ -705,6 +708,7 @@ const THEMES = {
     visitorMsg: ['おサルさんがツルでやってきた！', 'おサルさんがプレゼントを落としていった！']
   },
   sea: {
+    thumb: '<svg viewBox="0 0 64 64"><rect width="64" height="36" fill="#8fd6f2"/><rect y="34" width="64" height="30" fill="#1fb2d3"/><circle cx="50" cy="13" r="6.5" fill="#ffd54f"/><path d="M50 2.5v3M50 20.5v3M39.5 13h3M57.5 13h3M42.5 5.5l2 2M55.5 18.5l2 2M57.5 5.5l-2 2" stroke="#ffd54f" stroke-width="1.8" stroke-linecap="round"/><path d="M2 14a5 5 0 0 1 9-3 4 4 0 0 1 7 3z" fill="#fff"/><ellipse cx="22" cy="40" rx="15" ry="5" fill="#fcebc6"/><path d="M22 39c-1-8 1-15 4-20" stroke="#f4a04a" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#8fdcc4"><path d="M26 19c-6-2-11 0-13 4 5-2 9-2 13-4z"/><path d="M26 19c4-5 10-5 13-2-5 0-9 1-13 2z"/><path d="M26 19c-2-5-1-9 2-11-1 4-1 7-2 11z"/></g><g fill="#5fc4a0"><path d="M26 19c6 0 10 3 11 7-4-3-7-5-11-7z"/><path d="M26 19c-5 1-8 5-8 9 2-4 5-7 8-9z"/></g><path d="M8 50q4-3 8 0t8 0M36 56q4-3 8 0t8 0M44 44q3-2 6 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M47 34h12l-2 4H49z" fill="#7a4a2a"/><path d="M53 34V24" stroke="#4a3020" stroke-width="1.4"/><path d="M53 24h5l-1 3h-4z" fill="#26252b"/></svg>',
     name: 'きらきらの海', desc: 'カメやクジラと海をわたって、灯台のゴールへ', swatch: 'linear-gradient(135deg, #1fb2d3, #fcebc6)',
     css: 'linear-gradient(180deg, #6fcbef 0%, #c4ecf8 58%, #1fb2d3 62%, #1fb2d3 100%)',
     fog: 0x9adcf2, fogNear: 110, fogFar: 380, hemi: [0xffffff, 0xf2fbff], hemiI: .78, sun: 0xffffff,
@@ -1622,7 +1626,7 @@ function buildJungleWorld(rnd) {
     const lin = new THREE.Mesh(unitBox, K.ruins); lin.scale.set(15, 1.5, 2); lin.position.set(0, gy + 8.6, goalZ); world.add(lin);
     const sign = canvasTex(512, 160, (g, W, H) => {
       g.fillStyle = '#94673a'; g.fillRect(0, 0, W, H); g.fillStyle = '#6e4826'; g.fillRect(0, 0, W, 10); g.fillRect(0, H - 10, W, 10);
-      g.fillStyle = '#fff3d6'; g.font = '400 110px "Mochiy Pop One", "Hiragino Maru Gothic ProN", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GOAL', W / 2, H / 2 + 6);
+      g.fillStyle = '#fff3d6'; g.font = '800 110px "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GOAL', W / 2, H / 2 + 6);
     });
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.6), new THREE.MeshLambertMaterial({ map: sign })); sg.position.set(0, gy + 6.9, goalZ + 1.05); world.add(sg);
     for (let i = 0; i < 16; i++) flowers.push({ x: -7 + i * .93, y: gy + 9.3, z: goalZ + (rnd() - .5) * 1.4, s: .9, rot: rnd() * TAU, col: [0xe07aa6, 0xe8bf45, 0xe0844f, 0xf2efe6][i % 4] });
@@ -3739,7 +3743,7 @@ $$('.seg').forEach(seg => seg.addEventListener('click', (e) => {
 function updateStagePick() {
   const th = THEMES[stage];
   $('#stageName').textContent = `${STAGE_ORDER.indexOf(stage) + 1} ${th.name}`;
-  $('#stageSwatch').style.background = th.swatch;
+  $('#stageSwatch').innerHTML = th.thumb;
 }
 function renderStageList() {
   const list = $('#stageList');
@@ -3749,7 +3753,7 @@ function renderStageList() {
     const best = (lv) => { const v = parseFloat(store.get(`fc3-best-${id}-${lv}`)); return isNaN(v) ? '—' : fmt(v); };
     b.type = 'button'; b.className = 'stage-card'; b.setAttribute('aria-pressed', String(id === stage));
     b.innerHTML = '<span class="stage-swatch"></span><span class="stage-text"><span class="no"></span><span class="nm"></span><span class="ds"></span><span class="bt"></span></span>';
-    b.querySelector('.stage-swatch').style.background = th.swatch;
+    b.querySelector('.stage-swatch').innerHTML = th.thumb;
     b.querySelector('.no').textContent = `STAGE ${i + 1}`;
     b.querySelector('.nm').textContent = th.name;
     b.querySelector('.ds').textContent = th.desc;
