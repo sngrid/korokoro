@@ -392,97 +392,41 @@ const faceTex = new THREE.CanvasTexture(faceCanvas);
 faceTex.minFilter = THREE.LinearFilter; faceTex.generateMipmaps = false;
 const DISC = 0.42;
 
-// Korogirl's face, painted in the style of the character art so it can change expression:
-// normal (open smile), laugh (^ ^), angry (slanted lids, frown, anger mark), cry (> < with tears), jump (wide eyes, little "o")
-let faceIsDefault = true, faceExpr = 'normal';
+// Korogirl's face, painted in the style of the character art: glossy eyes, rosy cheeks, an open smile
 function drawDefaultFace(g, c, r) {
-  const ex = faceExpr, X = (v) => c + v * r, Y = (v) => c + v * r, INK = '#2a1714';
+  const X = (v) => c + v * r, Y = (v) => c + v * r;
   g.fillStyle = '#fbf6f4'; g.fillRect(0, 0, 512, 512);
-  const ERX = .085 * r, ERY = .12 * r, EY = Y(-.06);
+  const ERX = .097 * r, ERY = .137 * r, EY = Y(-.06);
   const cheeks = (a) => { for (const s of [-1, 1]) {
-    const cx = X(s * .44), cy = Y(.14), cr = .095 * r, gr = g.createRadialGradient(cx - cr * .3, cy - cr * .3, cr * .1, cx, cy, cr);
+    const cx = X(s * .45), cy = Y(.15), cr = .107 * r, gr = g.createRadialGradient(cx - cr * .3, cy - cr * .3, cr * .1, cx, cy, cr);
     gr.addColorStop(0, `rgba(255,178,192,${a})`); gr.addColorStop(.8, `rgba(255,140,162,${a * .9})`); gr.addColorStop(1, 'rgba(255,140,162,0)');
     g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, cr, 0, TAU); g.fill();
     g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.ellipse(cx + cr * .18, cy - cr * .42, cr * .22, cr * .14, -.3, 0, TAU); g.fill();
   } };
-  const eye = (s, k = 1) => {
-    const x = X(s * .26), rx = ERX * k, ry = ERY * k, gr = g.createLinearGradient(0, EY - ry, 0, EY + ry);
+  const eye = (s) => {
+    const x = X(s * .27), rx = ERX, ry = ERY, gr = g.createLinearGradient(0, EY - ry, 0, EY + ry);
     gr.addColorStop(0, '#1d1212'); gr.addColorStop(1, '#5e2c22');
     g.fillStyle = gr; g.beginPath(); g.ellipse(x, EY, rx, ry, 0, 0, TAU); g.fill();
     g.fillStyle = '#fff';
     g.beginPath(); g.ellipse(x + rx * .18, EY - ry * .4, rx * .42, ry * .33, 0, 0, TAU); g.fill();
     g.beginPath(); g.arc(x - rx * .2, EY + ry * .38, rx * .15, 0, TAU); g.fill();
   };
-  const stroke = (w) => { g.strokeStyle = INK; g.lineWidth = w * r; g.lineCap = 'round'; g.lineJoin = 'round'; };
-  // an open mouth: d > 0 smiles (flat-ish top, round bottom), d < 0 wails (round top, flat bottom)
+  // the open smile: a gently curved top edge, a round bottom, a little tongue
   const mouth = (cx, cy, w, d) => {
     g.beginPath();
-    if (d > 0) { g.moveTo(cx - w, cy); g.quadraticCurveTo(cx, cy + d * .2, cx + w, cy); g.quadraticCurveTo(cx + w * .95, cy + d, cx, cy + d); g.quadraticCurveTo(cx - w * .95, cy + d, cx - w, cy); }
-    else { const h = -d; g.moveTo(cx - w, cy + h); g.quadraticCurveTo(cx - w * .9, cy, cx, cy); g.quadraticCurveTo(cx + w * .9, cy, cx + w, cy + h); g.quadraticCurveTo(cx, cy + h * .8, cx - w, cy + h); }
+    g.moveTo(cx - w, cy); g.quadraticCurveTo(cx, cy + d * .2, cx + w, cy); g.quadraticCurveTo(cx + w * .95, cy + d, cx, cy + d); g.quadraticCurveTo(cx - w * .95, cy + d, cx - w, cy);
     g.closePath();
-    const top = Math.min(cy, cy + d), gr = g.createLinearGradient(0, top, 0, top + Math.abs(d));
+    const gr = g.createLinearGradient(0, cy, 0, cy + d);
     gr.addColorStop(0, '#7e1a28'); gr.addColorStop(1, '#b52b3c'); g.fillStyle = gr; g.fill();
     g.save(); g.clip();
-    const ty = d > 0 ? cy + d * .95 : cy - d * .95;
-    g.fillStyle = '#ff7b8e'; g.beginPath(); g.ellipse(cx, ty, w * .62, Math.abs(d) * .42, 0, 0, TAU); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(cx + w * .2, ty - Math.abs(d) * .2, w * .12, Math.abs(d) * .07, 0, 0, TAU); g.fill();
+    const ty = cy + d * .95;
+    g.fillStyle = '#ff7b8e'; g.beginPath(); g.ellipse(cx, ty, w * .62, d * .42, 0, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(cx + w * .2, ty - d * .2, w * .12, d * .07, 0, 0, TAU); g.fill();
     g.restore();
   };
-  if (ex === 'laugh') {
-    cheeks(.95);
-    stroke(.042); for (const s of [-1, 1]) { g.beginPath(); g.arc(X(s * .26), EY + ERY * .45, ERX * 1.15, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
-    mouth(c, Y(.08), .19 * r, .27 * r);
-  } else if (ex === 'angry') {
-    cheeks(.6);
-    for (const s of [-1, 1]) {
-      eye(s, .95);
-      const x = X(s * .26), ox = x + s * ERX * 1.6, ix = x - s * ERX * 1.6;
-      g.fillStyle = '#fbf6f4'; g.beginPath(); g.moveTo(ox, EY - ERY * 2); g.lineTo(ox, EY - ERY * .75); g.lineTo(ix, EY - ERY * .05); g.lineTo(ix, EY - ERY * 2); g.closePath(); g.fill();
-      stroke(.036); g.beginPath(); g.moveTo(x + s * ERX * 1.2, EY - ERY * 1.25); g.lineTo(x - s * ERX * 1.1, EY - ERY * .55); g.stroke();
-    }
-    stroke(.034); g.beginPath(); g.arc(c, Y(.3), .1 * r, Math.PI * 1.2, Math.PI * 1.8); g.stroke();
-    // anger mark
-    const mx = X(.4), my = Y(-.4), sz = .055 * r;
-    g.strokeStyle = '#ff4a5e'; g.lineWidth = .026 * r;
-    for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const a = Math.atan2(-dy, -dx); g.beginPath(); g.arc(mx + dx * sz, my + dy * sz, sz * .75, a - .9, a + .9); g.stroke(); }
-  } else if (ex === 'cry') {
-    cheeks(.7);
-    for (const s of [-1, 1]) {
-      const x = X(s * .26);
-      g.fillStyle = 'rgba(120,200,255,.85)'; g.beginPath(); g.moveTo(x - ERX * .35, EY + ERY * .2); g.lineTo(x + ERX * .35, EY + ERY * .2); g.lineTo(x + ERX * .45, EY + ERY * 2.6); g.quadraticCurveTo(x, EY + ERY * 3.1, x - ERX * .45, EY + ERY * 2.6); g.closePath(); g.fill();
-      g.beginPath(); g.ellipse(x + s * ERX * 1.3, EY + ERY * 2.9, ERX * .3, ERX * .4, 0, 0, TAU); g.fill();
-      stroke(.04); g.beginPath(); g.moveTo(x - s * ERX * 1.1, EY - ERY * .55); g.lineTo(x + s * ERX * .9, EY); g.lineTo(x - s * ERX * 1.1, EY + ERY * .55); g.stroke();
-      stroke(.03); g.beginPath(); g.moveTo(x + s * ERX * 1.1, EY - ERY * 1.45); g.lineTo(x - s * ERX * .9, EY - ERY * 1.85); g.stroke();
-    }
-    mouth(c, Y(.1), .15 * r, -.18 * r);
-  } else if (ex === 'jump') {
-    cheeks(.85);
-    for (const s of [-1, 1]) eye(s, 1.18);
-    g.fillStyle = '#fff'; for (const s of [-1, 1]) { const x = X(s * .26) + ERX * .2, y = EY - ERY * .45; g.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, rr = k % 2 ? ERX * .14 : ERX * .5; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.fill(); }
-    g.beginPath(); g.ellipse(c, Y(.2), .065 * r, .085 * r, 0, 0, TAU); const gr = g.createLinearGradient(0, Y(.12), 0, Y(.28)); gr.addColorStop(0, '#7e1a28'); gr.addColorStop(1, '#b52b3c'); g.fillStyle = gr; g.fill();
-    g.fillStyle = '#ff7b8e'; g.beginPath(); g.ellipse(c, Y(.26), .045 * r, .03 * r, 0, 0, TAU); g.fill();
-  } else {
-    cheeks(.85);
-    eye(-1); eye(1);
-    mouth(c, Y(.09), .15 * r, .2 * r);
-  }
-}
-// expressions: events set one for a moment, and now and then she pulls a face on her own
-let exprUntil = 0, nextIdleExpr = 3, titleHop = 9;
-function setExpr(e, dur) {
-  if (!faceIsDefault) return;
-  exprUntil = tAnim + dur;
-  if (e !== faceExpr) { faceExpr = e; buildFace(null); }
-}
-function updateExpr(dt) {
-  titleHop += dt;
-  if (!faceIsDefault) return;
-  if (faceExpr !== 'normal' && tAnim > exprUntil) { faceExpr = 'normal'; buildFace(null); }
-  if (tAnim > nextIdleExpr) {
-    const title = state === 'title', e = ['laugh', 'angry', 'cry', 'jump'][Math.floor(rand() * 4)];
-    nextIdleExpr = tAnim + (title ? 2.5 + rand() * 2.5 : 7 + rand() * 6);
-    if (faceExpr === 'normal' && (title || state === 'play')) { setExpr(e, 1.6); if (title && e === 'jump') titleHop = 0; }
-  }
+  cheeks(.85);
+  eye(-1); eye(1);
+  mouth(c, Y(.1), .17 * r, .225 * r);
 }
 
 // crop = { cx, cy, size } in image pixels: the square that becomes the front of the ball.
@@ -490,8 +434,6 @@ function buildFace(img, crop) {
   const g = faceCanvas.getContext('2d');
   const S = 512, c = S / 2, r = DISC * S;
   g.clearRect(0, 0, S, S);
-  faceIsDefault = !img;
-  if (img) faceExpr = 'normal';
   if (!img) { drawDefaultFace(g, c, r); faceTex.needsUpdate = true; return; }
   const k = (2 * r) / crop.size;
   g.save();
@@ -1874,7 +1816,7 @@ function surfStep(dt, r) {
     if (ball.y - sz.y > 1.6 || Math.hypot(ball.x - k.x, ball.z - k.z) > k.r + .85) continue;
     if (EASY) {
       if (timer - (k.cool ?? -9) < .5) continue;
-      k.cool = timer; ball.vx = (ball.x >= k.x ? 1 : -1) * 9; ball.vz = target * .35; sfx.bonk(); setExpr('cry', 1.2);
+      k.cool = timer; ball.vx = (ball.x >= k.x ? 1 : -1) * 9; ball.vz = target * .35; sfx.bonk();
     } else { toast('いたっ！ ウニにささった', 1600); surf = null; die(); return; }
   }
   rollBall(dt, r);
@@ -1930,7 +1872,7 @@ function updateBoss(dt) {
     else if (d < 2.3 && ball.y - c.ty < 2.6 && !cannon && !flying) {
       const nx = d > .01 ? dx / d : 0, nz = d > .01 ? dz / d : 1;
       ball.vx = nx * 10; ball.vz = nz * 10 + 3; ball.vy = 6; onGround = false; groundP = null;
-      sfx.bonk(); toast('ドカーン！', 1100); setExpr('angry', 1.6);
+      sfx.bonk(); toast('ドカーン！', 1100);
     }
     world.remove(c.mesh); world.remove(c.ring); c.ring.geometry.dispose(); c.ring.material.dispose();
     CBALLS.splice(i, 1);
@@ -2942,7 +2884,7 @@ function respawn() {
   onGround = true; coyote = 0; jumpBuf = 0;
 }
 function resetRun() {
-  timer = 0; collected = 0; misses = 0; cpIdx = 0; lastJumpAt = -9; exprUntil = 0;
+  timer = 0; collected = 0; misses = 0; cpIdx = 0; lastJumpAt = -9;
   Object.assign(fxState, { magnet: 0, wing: 0, big: 0, cloud: false });
   for (const s of STARS) { s.got = false; s.t = 0; Object.assign(s, s.home); s.mesh.visible = true; s.mesh.scale.setScalar(1); s.mesh.position.set(s.x, s.y, s.z); }
   CPS.forEach((c, i) => { c.on = i === 0; c.flags.forEach(f => f.color.setHex(i === 0 ? 0x8fe0c6 : 0xd3c4ff)); });
@@ -3116,12 +3058,11 @@ function updateSoundBtn() { $$('#btnSound, #btnSound2').forEach(b => b.textConte
 function jump() {
   if (state !== 'play') return;
   if (cannon) { if (cannon.c.mode === 'gun' ? !(cannon.c.reload > timer) : cannon.c.mode === 'aim' || cannon.t > .25) fireCannon(); return; }
-  if (surf) { if (!surfAir) { ball.vy = 10; surfAir = true; sfx.jump(); setExpr('jump', .8); } return; }
+  if (surf) { if (!surfAir) { ball.vy = 10; surfAir = true; sfx.jump(); } return; }
   if (flying) return;
   if (!(onGround || coyote > 0)) { jumpBuf = JUMP_BUFFER; return; }
   if (timer - lastJumpAt < .25) return;
   lastJumpAt = timer;
-  setExpr('jump', .8);
   ball.vy = JUMP_V * (fxState.wing > 0 ? 1.3 : 1); onGround = false; groundP = null; coyote = 0; jumpBuf = 0;
   sfx.jump();
 }
@@ -3255,7 +3196,7 @@ function exitGun(knock) {
   onGround = false; groundP = null; c.cool = timer + 2; cannon = null; ballMesh.visible = true;
 }
 function die() {
-  misses++; stage !== 'sky' ? sfx.splash() : sfx.fall(); respawn(); setExpr('cry', 2.2);
+  misses++; stage !== 'sky' ? sfx.splash() : sfx.fall(); respawn();
   toast(THEMES[stage].fall);
 }
 function rollBall(dt, r) {
@@ -3287,7 +3228,7 @@ function collect(dt) {
       if (d < 9 && d > .01) { const m = Math.min(d, 16 * dt) / d; s.x += dx * m; s.y += dy * m; s.z += dz * m; s.mesh.position.set(s.x, s.y, s.z); }
     }
     const dx = ball.x - s.x, dy = ball.y - s.y, dz = ball.z - s.z;
-    if (dx * dx + dy * dy + dz * dz < starR2) { s.got = true; collected++; sfx.star(); setExpr('laugh', .9); }
+    if (dx * dx + dy * dy + dz * dz < starR2) { s.got = true; collected++; sfx.star(); }
   }
 }
 // ballistic flight out of a barrel: no steering, caught by the next barrel or landing on the trail
@@ -3462,7 +3403,7 @@ function step(dt) {
 
 function finish() {
   state = 'clear';
-  sfx.goal(); setExpr('laugh', 99);
+  sfx.goal();
   const key = `fc3-best-${stage}-${level}`;
   const prev = parseFloat(store.get(key));
   const best = isNaN(prev) ? timer : Math.min(prev, timer);
@@ -3634,7 +3575,6 @@ function updateJungle(dt) {
 
 function updateScene(dt) {
   tAnim += dt;
-  updateExpr(dt);
   if (state !== 'pause') worldT += dt;
   const targetBig = fxState.big > 0 ? 1.6 : 1;
   bigScale += (targetBig - bigScale) * (1 - Math.exp(-dt * 6));
@@ -3664,19 +3604,22 @@ function updateScene(dt) {
   const k = 1 - Math.exp(-dt * 5);
   if (state === 'title') {
     for (const p of P) if (p.mv) { p.x = p.bx + Math.sin(worldT * p.mv.spd + p.mv.ph) * p.mv.amp; p.mesh.position.x = p.x; }
-    if ($('#cropOv').hidden) ballMesh.quaternion.setFromEuler(new THREE.Euler(0, REDUCED ? 0 : Math.sin(tAnim * .6) * .5, 0));
+    const m = REDUCED ? {} : titlePlay(dt);
+    if ($('#cropOv').hidden) ballMesh.quaternion.setFromEuler(new THREE.Euler(-.12, (REDUCED ? 0 : Math.sin(tAnim * .6) * .4) + (m.yaw || 0), m.roll || 0, 'YXZ'));
     else ballMesh.quaternion.identity();
+    const sq = m.sq || 0;
+    ballMesh.scale.set(1 + sq * .13, 1 - sq * .17, 1 + sq * .13);
     const gy = lastGroundY + R;
-    ball.y = gy + (REDUCED ? 0 : Math.abs(Math.sin(tAnim * 2.4)) * .35 + (titleHop < .8 ? Math.sin(titleHop / .8 * Math.PI) * 1.8 : 0));
+    ball.y = gy - sq * .17 * R + (REDUCED ? 0 : (m.busy ? 0 : Math.abs(Math.sin(tAnim * 2.4)) * .35) + (m.y || 0));
     camY = gy;
     const fr = titleFrame();
     if (fr) {
       // look straight at the ball from a distance that gives it the wanted size, then slide the view so it sits in the gap
       const d = R * (fr.H / 2) / (Math.tan(camera.fov * Math.PI / 360) * fr.rad);
       camera.setViewOffset(fr.W, fr.H, 0, fr.H / 2 - fr.yc, fr.W, fr.H);
-      tmpV.set(ball.x + d * .12, gy + .35 + d * .16, ball.z + d);
+      tmpV.set(ball.x + d * .1, gy + .5 + d * .07, ball.z + d);
       camPos.lerp(tmpV, k);
-      camLook.lerp(tmpV.set(ball.x, gy + .35 + d * .02, ball.z), k);
+      camLook.lerp(tmpV.set(ball.x, gy + .5, ball.z), k);
     } else {
       if (camera.view && camera.view.enabled) camera.clearViewOffset();
       tmpV.set(ball.x + 1.2, gy + .9, ball.z + 7);
@@ -3700,6 +3643,21 @@ function updateScene(dt) {
 }
 
 // the free band between the title logo and the menu card, in canvas pixels (null when the title card is not showing)
+const hopArc = (t, len, h) => t < len ? Math.sin(t / len * Math.PI) * h : 0;
+const landSquash = (t, at) => t > at && t < at + .18 ? Math.sin((t - at) / .18 * Math.PI) : 0;
+const TITLE_MOVES = [
+  { len: 1.05, f: (t) => ({ y: hopArc(t - .12, .75, 1.9), sq: (t < .12 ? Math.sin(t / .12 * Math.PI / 2) * .6 : 0) + landSquash(t, .87) }) },
+  { len: 1.3, f: (t) => ({ y: hopArc(t, .5, 1) + hopArc(t - .62, .5, 1.1), sq: landSquash(t, .5) * .6 + landSquash(t, 1.12) }) },
+  { len: 1.15, f: (t) => { const k = Math.min(1, t / .9); return { y: hopArc(t, .9, 1.4), yaw: (k * k * (3 - 2 * k)) * TAU, sq: landSquash(t, .9) }; } },
+  { len: 1.2, f: (t) => ({ roll: Math.sin(t * 15) * .32 * (1 - t / 1.2), y: Math.abs(Math.sin(t * 7.5)) * .25 }) }
+];
+let playMove = null, playT = 0, nextPlay = 1.5;
+function titlePlay(dt) {
+  playT += dt;
+  if (playMove && playT >= playMove.len) playMove = null;
+  if (!playMove && tAnim > nextPlay) { playMove = TITLE_MOVES[Math.floor(rand() * TITLE_MOVES.length)]; playT = 0; nextPlay = tAnim + playMove.len + 1.6 + rand() * 2.4; }
+  return playMove ? { ...playMove.f(playT), busy: true } : {};
+}
 function titleFrame() {
   const ov = $('#titleOv'); if (ov.hidden) return null;
   const W = cvs.clientWidth, H = cvs.clientHeight, top = $('#titleOv .brand').getBoundingClientRect().bottom, bot = $('#titleOv .card').getBoundingClientRect().top, cv = cvs.getBoundingClientRect();
