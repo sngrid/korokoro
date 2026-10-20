@@ -1,19 +1,20 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
-<title>フォトコロコロ</title>
+<title>コロガールの転がる大冒険</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
 /* Layout: full-screen 3D course; HUD chips + progress ribbon on top, thumb controls at the bottom, cards float over the scene. Single committed look: pastel toy world (sky gradient is swapped per stage). */
 :root {
-  --ink: #6a4c7d;
-  --ink-soft: #9a83ab;
-  --pink: #ff8fbf;
-  --pink-deep: #e9679f;
-  --mint: #8fe0c6;
-  --mint-deep: #5fbfa0;
-  --lemon: #ffe58a;
-  --cream: #fffaf5;
+  --ink: #2b3a67;
+  --ink-soft: #6d7aa3;
+  --pink: #ff8fb1;
+  --pink-deep: #f0628e;
+  --mint: #4fc3f7;
+  --mint-deep: #239bd3;
+  --lemon: #ffd54f;
+  --cream: #fff8e1;
+  --blue-line: #1e6fd9;
   --lav: #d9ccff;
   --font-display: "Mochiy Pop One", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
   --font-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
@@ -96,7 +97,7 @@ body {
 .btn:disabled { opacity: .55; }
 .btn:focus-visible, .jump:focus-visible, .menu-btn:focus-visible, .seg button:focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; }
 .btn.primary { background: var(--pink); color: #fff; border-color: #ffd0e4; box-shadow: 0 4px 0 var(--pink-deep); }
-.btn.mint { background: var(--mint); color: #2f6b5a; border-color: #d2f6ea; box-shadow: 0 4px 0 var(--mint-deep); }
+.btn.mint { background: var(--mint); color: #fff; border-color: #c9ecfc; box-shadow: 0 4px 0 var(--mint-deep); text-shadow: 0 1px 0 rgba(30,111,217,.35); }
 .btn.wide { width: 100%; padding: 14px; font-size: 16px; }
 .mode { font: 800 12px/1 var(--font-body); color: var(--ink-soft); background: rgba(255,250,245,.7); padding: 6px 10px; border-radius: 999px; }
 .jump {
@@ -125,17 +126,24 @@ body {
 .overlay.center { justify-content: center; background: rgba(255, 240, 248, .5); }
 .card {
   width: min(380px, 100%);
-  background: rgba(255, 250, 245, .95);
+  background: rgba(255, 248, 225, .96);
   border: 3px solid #fff;
   border-radius: 28px;
   padding: 16px;
   display: flex; flex-direction: column; gap: 10px;
   text-align: center;
-  box-shadow: 0 8px 0 rgba(233, 103, 159, .18), 0 18px 40px rgba(154, 131, 171, .25);
+  box-shadow: 0 8px 0 rgba(79, 195, 247, .28), 0 18px 40px rgba(43, 58, 103, .18);
 }
 .logo { font: 400 28px/1.15 var(--font-display); color: var(--pink-deep); letter-spacing: .02em; text-wrap: balance;
   text-shadow: 0 3px 0 #fff, 0 5px 0 rgba(233,103,159,.2); }
 .logo span { color: #f2a93b; }
+.brand { width: min(360px, 94vw, 50vh); margin: max(4px, env(safe-area-inset-top, 0px)) auto auto; flex: none; }
+.brand svg { display: block; width: 100%; height: auto; overflow: visible; }
+.brand text { font-family: var(--font-display); }
+@media (max-height: 720px) {
+  #titleOv .card { gap: 7px; padding: 12px; }
+  #titleOv .btn { padding-top: 10px; padding-bottom: 10px; }
+}
 .h2 { font: 400 22px/1.2 var(--font-display); color: var(--pink-deep); }
 .sub { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); text-wrap: pretty; }
 .row { display: flex; gap: 8px; }
@@ -229,8 +237,48 @@ label.btn { display: inline-flex; justify-content: center; align-items: center; 
   <div class="toast off" id="toast" role="status"></div>
 
   <div class="overlay" id="titleOv">
+    <div class="brand" role="img" aria-label="コロガールの転がる大冒険">
+      <svg viewBox="0 0 360 160" aria-hidden="true">
+        <defs>
+          <linearGradient id="gY" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe98a"/><stop offset="1" stop-color="#ffc83a"/></linearGradient>
+          <linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc2d6"/><stop offset="1" stop-color="#ff7fa8"/></linearGradient>
+          <symbol id="sStar" viewBox="-1 -1 2 2"><path d="M0-1 .29-.4.95-.31.47.15.59.81 0 .5-.59.81-.47.15-.95-.31-.29-.4Z"/></symbol>
+        </defs>
+        <g transform="rotate(-4 180 18)" font-size="15" text-anchor="middle">
+          <text x="180" y="22" fill="#fff" stroke="#fff" stroke-width="6" stroke-linejoin="round">ころがって、ゴールをめざそう！</text>
+          <text x="180" y="22" fill="#1e88e5">ころがって、ゴールをめざそう！</text>
+          <path d="M44 14l10 6M48 4l12 9M316 12l-10 6M312 2l-12 9" stroke="#1e88e5" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <g font-size="64" stroke-linejoin="round" stroke-linecap="round">
+          <g stroke="#fff" stroke-width="20" fill="#fff">
+            <text x="10" y="104" textLength="60" lengthAdjust="spacingAndGlyphs">コ</text>
+            <rect x="78" y="48" width="60" height="60" rx="17"/>
+            <text x="146" y="104" textLength="186" lengthAdjust="spacingAndGlyphs">ガール</text>
+          </g>
+          <g stroke="var(--blue-line)" stroke-width="10" fill="var(--blue-line)">
+            <text x="10" y="104" textLength="60" lengthAdjust="spacingAndGlyphs">コ</text>
+            <rect x="78" y="48" width="60" height="60" rx="17"/>
+            <text x="146" y="104" textLength="186" lengthAdjust="spacingAndGlyphs">ガール</text>
+          </g>
+          <text x="10" y="104" textLength="60" lengthAdjust="spacingAndGlyphs" fill="url(#gY)">コ</text>
+          <rect x="78" y="48" width="60" height="60" rx="17" fill="url(#gY)"/>
+          <text x="146" y="104" textLength="186" lengthAdjust="spacingAndGlyphs" fill="url(#gP)">ガール</text>
+          <ellipse cx="97" cy="74" rx="4.2" ry="6.2" fill="#1c2340"/><ellipse cx="119" cy="74" rx="4.2" ry="6.2" fill="#1c2340"/>
+          <circle cx="98.4" cy="71.6" r="1.6" fill="#fff"/><circle cx="120.4" cy="71.6" r="1.6" fill="#fff"/>
+          <path d="M100 86q8 8 16 0" fill="none" stroke="#1c2340" stroke-width="3.4"/>
+          <ellipse cx="90" cy="84" rx="4.5" ry="2.6" fill="#ff9fb4" opacity=".8"/><ellipse cx="126" cy="84" rx="4.5" ry="2.6" fill="#ff9fb4" opacity=".8"/>
+          <path d="M84 56q5-4 12-4" fill="none" stroke="#fff" stroke-width="4" opacity=".85"/>
+        </g>
+        <use href="#sStar" x="322" y="22" width="34" height="34" fill="var(--lemon)" stroke="var(--blue-line)" stroke-width=".14" stroke-linejoin="round"/>
+        <g font-size="25" text-anchor="middle" stroke-linejoin="round">
+          <text x="180" y="146" fill="#fff" stroke="#fff" stroke-width="9">の転がる大冒険</text>
+          <text x="180" y="146" fill="#2b3a67">の転がる<tspan fill="#ff9417">大冒険</tspan></text>
+        </g>
+        <use href="#sStar" x="66" y="126" width="16" height="16" fill="var(--lemon)"/>
+        <use href="#sStar" x="280" y="126" width="16" height="16" fill="var(--lemon)"/>
+      </svg>
+    </div>
     <div class="card">
-      <div class="logo">フォト<span>コロコロ</span></div>
       <div class="row">
         <label class="btn mint" for="fileInput">顔写真をえらぶ</label>
         <button class="btn" id="btnResetPhoto" type="button">元の顔にもどす</button>
@@ -384,16 +432,24 @@ faceTex.minFilter = THREE.LinearFilter; faceTex.generateMipmaps = false;
 const DISC = 0.42;
 
 function drawDefaultFace(g, c, r) {
-  g.fillStyle = '#ffd6c6'; g.fillRect(0, 0, 512, 512);
-  g.fillStyle = '#4a3357';
-  g.beginPath(); g.ellipse(c - r * .3, c - r * .08, r * .07, r * .13, 0, 0, TAU); g.fill();
-  g.beginPath(); g.ellipse(c + r * .3, c - r * .08, r * .07, r * .13, 0, 0, TAU); g.fill();
-  g.fillStyle = '#fff';
-  g.beginPath(); g.arc(c - r * .28, c - r * .14, r * .03, 0, TAU); g.arc(c + r * .32, c - r * .14, r * .03, 0, TAU); g.fill();
-  g.fillStyle = 'rgba(255, 120, 170, .55)';
-  g.beginPath(); g.ellipse(c - r * .5, c + r * .14, r * .13, r * .07, 0, 0, TAU); g.ellipse(c + r * .5, c + r * .14, r * .13, r * .07, 0, 0, TAU); g.fill();
-  g.strokeStyle = '#4a3357'; g.lineWidth = r * .045; g.lineCap = 'round';
-  g.beginPath(); g.arc(c, c + r * .1, r * .14, .15 * Math.PI, .85 * Math.PI); g.stroke();
+  g.fillStyle = '#fffdfa'; g.fillRect(0, 0, 512, 512);
+  for (const s of [-1, 1]) {
+    const ck = g.createRadialGradient(c + s * r * .5, c + r * .14, 0, c + s * r * .5, c + r * .14, r * .16);
+    ck.addColorStop(0, 'rgba(255,140,165,.75)'); ck.addColorStop(1, 'rgba(255,140,165,0)');
+    g.fillStyle = ck; g.beginPath(); g.ellipse(c + s * r * .5, c + r * .14, r * .17, r * .11, 0, 0, TAU); g.fill();
+    const ex = c + s * r * .27, ey = c - r * .1;
+    g.fillStyle = '#1c1f2e'; g.beginPath(); g.ellipse(ex, ey, r * .1, r * .15, 0, 0, TAU); g.fill();
+    g.fillStyle = '#fff';
+    g.beginPath(); g.ellipse(ex + r * .025, ey - r * .065, r * .045, r * .052, 0, 0, TAU); g.fill();
+    g.beginPath(); g.arc(ex - r * .03, ey + r * .06, r * .016, 0, TAU); g.fill();
+  }
+  // open smile with a little tongue
+  const my = c + r * .1, mw = r * .25;
+  g.beginPath(); g.moveTo(c - mw, my); g.quadraticCurveTo(c, my + r * .05, c + mw, my); g.quadraticCurveTo(c + mw * .9, my + r * .4, c, my + r * .4); g.quadraticCurveTo(c - mw * .9, my + r * .4, c - mw, my); g.closePath();
+  g.fillStyle = '#9c2338'; g.fill();
+  g.save(); g.clip();
+  g.fillStyle = '#ff7d96'; g.beginPath(); g.ellipse(c, my + r * .38, r * .16, r * .12, 0, 0, TAU); g.fill();
+  g.restore();
 }
 
 // crop = { cx, cy, size } in image pixels: the square that becomes the front of the ball.
@@ -3576,10 +3632,22 @@ function updateScene(dt) {
     const gy = lastGroundY + R;
     ball.y = gy + (REDUCED ? 0 : Math.abs(Math.sin(tAnim * 2.4)) * .35);
     camY = gy;
-    tmpV.set(ball.x + 1.2, gy + .9, ball.z + 7);
-    camPos.lerp(tmpV, k);
-    camLook.lerp(tmpV.set(ball.x, gy - 2.4, ball.z), k);
+    const fr = titleFrame();
+    if (fr) {
+      // look straight at the ball from a distance that gives it the wanted size, then slide the view so it sits in the gap
+      const d = R * (fr.H / 2) / (Math.tan(camera.fov * Math.PI / 360) * fr.rad);
+      camera.setViewOffset(fr.W, fr.H, 0, fr.H / 2 - fr.yc, fr.W, fr.H);
+      tmpV.set(ball.x + d * .12, gy + .35 + d * .16, ball.z + d);
+      camPos.lerp(tmpV, k);
+      camLook.lerp(tmpV.set(ball.x, gy + .35 + d * .02, ball.z), k);
+    } else {
+      if (camera.view && camera.view.enabled) camera.clearViewOffset();
+      tmpV.set(ball.x + 1.2, gy + .9, ball.z + 7);
+      camPos.lerp(tmpV, k);
+      camLook.lerp(tmpV.set(ball.x, gy - 2.4, ball.z), k);
+    }
   } else {
+    if (camera.view && camera.view.enabled) camera.clearViewOffset();
     const above = ball.y - (lastGroundY + R);
     const fy = lastGroundY + R + (above > 0 ? (above < 3 ? above * .5 : 1.5 + (above - 3)) : Math.max(above, -2.5));   // big launches pull the camera up with the ball
     camY += (fy - camY) * (1 - Math.exp(-dt * 6));
@@ -3594,6 +3662,14 @@ function updateScene(dt) {
   sun.target.position.set(ball.x, lastGroundY, ball.z - 3);
 }
 
+// the free band between the title logo and the menu card, in canvas pixels (null when the title card is not showing)
+function titleFrame() {
+  const ov = $('#titleOv'); if (ov.hidden) return null;
+  const W = cvs.clientWidth, H = cvs.clientHeight, top = $('#titleOv .brand').getBoundingClientRect().bottom, bot = $('#titleOv .card').getBoundingClientRect().top, cv = cvs.getBoundingClientRect();
+  const band = bot - top;
+  if (band < 44) return null;
+  return { W, H, yc: (top + bot) / 2 - cv.top, rad: Math.max(20, Math.min(110, band * .42)) };
+}
 function resize() {
   const w = cvs.clientWidth, h = cvs.clientHeight;
   renderer.setSize(w, h, false);
