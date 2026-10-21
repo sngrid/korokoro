@@ -841,46 +841,47 @@ function buildSky() {
   seg(40, 12);                            checkpoint(0, 6); startZ = 6;
   starLine(0, -2, 0, -24, 5);
   let s = seg(16, 6);                     starLine(0, s.z0 - 3, 0, s.z1 + 3, 3);
-  curvy(14, 4, 5.5, 4.5, .45);
+  curvy(14, 4, 6.5, 4.5, .45);
   s = seg(12, 9);
   checkpoint(0, s.z0 - 2);
   zone(Z.mint);
   s = hop(2.5, 10, 8, 0);                 starLine(-2, s.z0 - 3, 2, s.z1 + 3, 3);
-  seg(8, 5, 0);
+  seg(8, 6.5, 0);
   s = hop(2.5, 12, 9, -1);                starLine(-1, s.z0 - 3, -1, s.z1 + 3, 3);
-  curvy(10, 4, 5, 3.5, .7);
+  curvy(10, 4, 6.5, 3.5, .7);
   s = seg(12, 10);                        checkpoint(0, s.z1 + 6);
   zone(Z.lemon);
   s = seg(46, 14);
-  for (let i = 0, z = s.z0 - 9; z > s.z1 + 7; i++, z -= 7) {
-    (i % 2 ? [-3.2, 3.2] : [-5, 0, 5]).forEach(x => bumper(x, z));
-    star(i % 2 ? 0 : -2.5, z - 3.5); star(i % 2 ? 0 : 2.5, z - 3.5);
+  for (let i = 0, z = s.z0 - 10; z > s.z1 + 7; i++, z -= 13) {
+    (i % 2 ? [0] : [-4, 4]).forEach(x => bumper(x, z));
+    star(i % 2 ? -3 : 0, z - 5); star(i % 2 ? 3 : 0, z - 8);
   }
-  s = seg(14, 3.2);                       fence(s); starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
+  s = seg(14, 4.6);                       fence(s); starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
   seg(8, 9);
   zone(Z.lav);
   hop(2.5, 8, 6, 0, { mv: { amp: 2.5, spd: .8, ph: 0 } });
   s = hop(2.5, 14, 10, 0);                checkpoint(0, s.z1 + 6);
-  curvy(16, 3.5, 5.2, 4, .45);
+  curvy(16, 3.5, 6.5, 4, .45);
   seg(10, 9);
   zone(Z.peach);
-  s = seg(18, 2.6, 0);                    starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
-  seg(4, 8, 1.5);
-  s = seg(18, 2.6, 3);                    starLine(3, s.z0 - 2, 3, s.z1 + 2, 4);
-  seg(4, 8, 0);
-  s = seg(18, 2.6, -3);                   starLine(-3, s.z0 - 2, -3, s.z1 + 2, 4);
-  seg(4, 8, -1.5);
-  seg(14, 2.6, 0);
+  s = seg(18, 4.2, 0);                    starLine(0, s.z0 - 2, 0, s.z1 + 2, 4);
+  seg(4, 9, 1.5);
+  s = seg(18, 4.2, 3);                    starLine(3, s.z0 - 2, 3, s.z1 + 2, 4);
+  seg(4, 9, 0);
+  s = seg(18, 4.2, -3);                   starLine(-3, s.z0 - 2, -3, s.z1 + 2, 4);
+  seg(4, 9, -1.5);
+  seg(14, 4.2, 0);
   s = seg(12, 9);                         checkpoint(0, s.z1 + 6);
   zone(Z.sky);
-  curvy(18, 3.5, 5, 4.5, .45);
+  curvy(18, 3.5, 6.5, 4.5, .45);
   seg(6, 8, 0);
   hop(2.5, 10, 8, 0, { mv: { amp: 1.8, spd: .7, ph: 1 } });
-  seg(8, 5, 0);
+  seg(8, 6.5, 0);
   s = hop(2.5, 14, 10, 0);                checkpoint(0, s.z1 + 6);
   zone(Z.pink);
   s = seg(40, 8);                         fence(s);
-  for (let i = 0, z = s.z0 - 7; z > s.z1 + 5; i++, z -= 6) { bumper(i % 2 ? 1.8 : -1.8, z); star(i % 2 ? -1.8 : 1.8, z); }
+  for (let i = 0, z = s.z0 - 8; z > s.z1 + 5; i++, z -= 13) { bumper(i % 2 ? 2 : -2, z); star(i % 2 ? -2 : 2, z); }
+  starLine(0, s.z0 - 14, 0, s.z1 + 4, 3);
   hop(2.5, 8, 7, 0);
   s = hop(2.5, 26, 16, 0);
   starLine(-4, s.z0 - 4, 4, s.z0 - 4, 5);
@@ -1140,7 +1141,8 @@ const SKY_MODEL = {
   url: 'fusha.glb',               // served next to index.html
   scale: 2.1,                     // model height, as a fraction of the island radius (the model is a whole floating island)
   offset: { x: 0, y: -1.25, z: 0 }, // position, in island radii from the island's centre top (negative y hangs the rock base below)
-  rotY: Math.PI / 2               // extra turn so the front faces the course
+  rotY: 0,                        // world yaw of the model's front; 0 faces the player (the model's front is its +z)
+  turnIn: .35                     // extra turn toward the course for islands on either side
 };
 let skyModel = null, skyModelLoading = false;
 function loadSkyModel() {
@@ -1166,6 +1168,10 @@ function loadSkyModel() {
     fillModelSlots();
   }, undefined, (e) => { skyModelLoading = false; console.warn('sky model could not be loaded:', e); });
 }
+// cancel the island's own turn so the model's front ends up facing the player, angled in toward the course
+function faceModels(isl, side) {
+  for (const slot of SKYW.modelSlots) if (slot.parent === isl) slot.userData.yaw = SKY_MODEL.rotY - side * SKY_MODEL.turnIn - isl.rotation.y;
+}
 function fillModelSlots() {
   if (!skyModel || !SKYW) return;
   for (const slot of SKYW.modelSlots) {
@@ -1173,7 +1179,7 @@ function fillModelSlots() {
     const s = slot.userData.s, inst = skyModel.clone();
     inst.scale.setScalar(s * SKY_MODEL.scale);
     inst.position.set(SKY_MODEL.offset.x * s, SKY_MODEL.offset.y * s, SKY_MODEL.offset.z * s);
-    inst.rotation.y = SKY_MODEL.rotY;
+    inst.rotation.y = slot.userData.yaw;
     slot.add(inst);
   }
 }
@@ -1231,9 +1237,9 @@ function buildSkyWorld(rnd) {
     const side = i % 2 ? 1 : -1, far = i % 3 === 2, s = far ? 8 + rnd() * 5 : 5 + rnd() * 2.5;
     const isl = makeSkyIsland(s, rnd, { model: !far, fall: rnd() < .7, fallA: side > 0 ? Math.PI : 0, fenceA: side > 0 ? Math.PI * .5 : -Math.PI * .5 });
     isl.position.set(side * (far ? 55 + rnd() * 25 : 17 + rnd() * 6), (far ? 9 : 1) + rnd() * 4, z); isl.rotation.y = side > 0 ? 0 : Math.PI;
-    mergeByMaterial(isl, new Set(SKYW.modelSlots)); world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
+    faceModels(isl, side); mergeByMaterial(isl, new Set(SKYW.modelSlots)); world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
   }
-  const goalIsl = makeSkyIsland(13, rnd, { model: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); mergeByMaterial(goalIsl, new Set(SKYW.modelSlots)); world.add(goalIsl);
+  const goalIsl = makeSkyIsland(13, rnd, { model: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); faceModels(goalIsl, 1); mergeByMaterial(goalIsl, new Set(SKYW.modelSlots)); world.add(goalIsl);
   loadSkyModel(); fillModelSlots();
   const bcols = [['#ffb3e6', '#ffffff'], ['#7fd8ff', '#ffd6ec'], ['#ffeba7', '#ffb3e6'], ['#b8b0ff', '#ffffff'], ['#a3d8ff', '#ffeba7']];
   for (let z = -20, i = 0; z > goalZ - 30; z -= 40 + rnd() * 25, i++) {
