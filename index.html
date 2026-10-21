@@ -766,7 +766,7 @@ const THEMES = {
     thumb: '<svg viewBox="0 0 64 64"><defs><linearGradient id="tkS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd8ff"/><stop offset="1" stop-color="#ffd6ea"/></linearGradient></defs><rect width="64" height="64" fill="url(#tkS)"/><g fill="none" stroke-width="4.5"><path d="M6 46a26 26 0 0 1 52 0" stroke="#ff8fb1"/><path d="M10.5 46a21.5 21.5 0 0 1 43 0" stroke="#ffd54f"/><path d="M15 46a17 17 0 0 1 34 0" stroke="#8fdcc4"/><path d="M19.5 46a12.5 12.5 0 0 1 25 0" stroke="#4fc3f7"/></g><g fill="#fff"><circle cx="9" cy="50" r="8"/><circle cx="19" cy="47" r="9"/><circle cx="28" cy="53" r="7"/><circle cx="42" cy="53" r="7"/><circle cx="51" cy="47" r="9"/><circle cx="60" cy="51" r="8"/><rect y="52" width="64" height="12"/></g><path d="M32 7l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z" fill="#ffd54f" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="53" cy="14" rx="4.5" ry="5.5" fill="#ff8fb1"/><path d="M53 19.5v6" stroke="#fff" stroke-width="1"/></svg>',
     name: 'わたぐもの空', desc: 'ふわふわの雲の上を転がって、虹のゴールへ', swatch: 'linear-gradient(135deg, #bfe6ff, #ffd6e8)',
     css: 'linear-gradient(180deg, #3aaef0 0%, #6cc6f6 40%, #a7dcfb 60%, #d8efff 72%, #eef6ff 100%)',
-    fog: 0xdcefff, fogNear: 70, fogFar: 320, hemi: [0xffffff, 0xeadfff], hemiI: .58, sun: 0xfff3e6, sunI: .62,
+    fog: 0xe6f6ff, fogNear: 70, fogFar: 320, hemi: [0xffffff, 0xe6dcff], hemiI: .66, sun: 0xfff6ec, sunI: .5,
     goal: [0xffb3c7, 0xffcfa3, 0xfff0a0, 0xb9f0cf, 0xaedcff, 0xd3c4ff],
     fall: 'ふわっ… 旗のところから再開',
     visitorMsg: ['あれ？ なにか近づいてくる…', 'UFOがプレゼントを落としていった！']
@@ -964,9 +964,10 @@ function placed(geo, mat, list, set) {
 /* ---------- sky stage art ---------- */
 // A soft pastel toy world: the course is made of jelly-like rounded tiles sitting on billowy clouds;
 // grassy floating islands with waterfalls, a windmill and a castle fill the middle distance under a blue sky full of cumulus.
+// colours follow the design sheet: main yellow FFEBA7, main pink FFB3E6, main blue 7FD8FF, light pink FFD6EC, purple 6B7BFF accents
 const SKYPAL = {
-  pink: [0xffb6d5, 0xffe69a, 0xa9dcff], mint: [0xb4efd6, 0xa9dcff, 0xffe69a], lemon: [0xffe69a, 0xffb6d5, 0xa9dcff],
-  lav: [0xd8bcff, 0xffb6d5, 0xa9dcff], peach: [0xffcfae, 0xffe69a, 0xffb6d5], sky: [0xa9dcff, 0xd8bcff, 0xffe69a]
+  pink: [0xffb3e6, 0xffeba7, 0x7fd8ff], mint: [0x9fe6b4, 0x7fd8ff, 0xffeba7], lemon: [0xffeba7, 0xffb3e6, 0x7fd8ff],
+  lav: [0xc4b8ff, 0xffb3e6, 0x7fd8ff], peach: [0xffd6ec, 0xffeba7, 0xffb3e6], sky: [0x7fd8ff, 0xc4b8ff, 0xffeba7]
 };
 const ZONE_OF = { 0xffbfd8: 'pink', 0xaeeed8: 'mint', 0xffeaa6: 'lemon', 0xd3c4ff: 'lav', 0xffcdb0: 'peach', 0xaedcff: 'sky' };
 let SKYK = null, SKYW = null;
@@ -994,8 +995,8 @@ function roundedBoxGeo(r = .2, seg = 5) {
   return g;
 }
 // cloud puffs: smooth spheres, white on top fading to a lilac shade underneath
-function cloudGeo() {
-  const g = new THREE.SphereGeometry(1, 24, 16), p = g.attributes.position, col = new Float32Array(p.count * 3), top = new THREE.Color(0xffffff), bot = new THREE.Color(0xebe3fd);
+function cloudGeo(w = 16, h = 11) {
+  const g = new THREE.SphereGeometry(1, w, h), p = g.attributes.position, col = new Float32Array(p.count * 3), top = new THREE.Color(0xffffff), bot = new THREE.Color(0xf1dcf4);
   for (let i = 0; i < p.count; i++) { const t = Math.max(0, Math.min(1, (p.getY(i) + .7) / 1.3)); tmpCol.copy(bot).lerp(top, t * t * (3 - 2 * t)); col.set([tmpCol.r, tmpCol.g, tmpCol.b], i * 3); }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   return g;
@@ -1010,14 +1011,14 @@ function paintCumulus(g, x, y, s, a, bumps) {
   for (const [dx, dy, r] of bumps) {
     const bx = x + dx, by = y + dy;
     const gr = g.createLinearGradient(0, by - r, 0, by + r);
-    gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(.55, `rgba(252,251,255,${a})`); gr.addColorStop(1, `rgba(222,214,246,${a})`);
+    gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(.55, `rgba(253,250,255,${a})`); gr.addColorStop(1, `rgba(240,218,244,${a})`);
     g.fillStyle = gr; g.beginPath(); g.arc(bx, by, r, 0, TAU); g.fill();
   }
-  g.fillStyle = `rgba(226,219,248,${a})`; g.fillRect(x - s * 1.5, y - 2, s * 3, s * .12);
+  g.fillStyle = `rgba(238,222,246,${a})`; g.fillRect(x - s * 1.5, y - 2, s * 3, s * .12);
 }
 function drawSkyDome(g, W, H) {
   const sky = g.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#3aaef0'); sky.addColorStop(.4, '#6cc6f6'); sky.addColorStop(.6, '#a7dcfb'); sky.addColorStop(.72, '#d8efff'); sky.addColorStop(1, '#eef6ff');
+  sky.addColorStop(0, '#4fc4f6'); sky.addColorStop(.38, '#7fd8ff'); sky.addColorStop(.58, '#b7e3ff'); sky.addColorStop(.72, '#e6f6ff'); sky.addColorStop(1, '#f6f0ff');
   g.fillStyle = sky; g.fillRect(0, 0, W, H);
   const wrap = (x, f) => { f(x); f(x - W); f(x + W); };
   const list = [];
@@ -1029,46 +1030,38 @@ function drawSkyDome(g, W, H) {
     g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.5; g.lineCap = 'round';
     g.beginPath(); g.moveTo(x - s, y - s * .3); g.quadraticCurveTo(x - s * .5, y - s * .8, x, y); g.quadraticCurveTo(x + s * .5, y - s * .8, x + s, y - s * .3); g.stroke();
   }
-  g.fillStyle = '#f2efff'; g.fillRect(0, H * .78, W, H * .22);
+  g.fillStyle = '#f6f0ff'; g.fillRect(0, H * .78, W, H * .22);
 }
-function drawStone(g, W, H) {
-  g.fillStyle = '#d9ad80'; g.fillRect(0, 0, W, H);
-  const rows = 6, rh = H / rows;
-  for (let r = 0; r < rows; r++) {
-    let x = -(r % 2) * 22;
-    while (x < W) {
-      const w = 34 + trnd() * 26, y = r * rh;
-      g.fillStyle = ['#f0cda2', '#e8c094', '#f6d9b2'][Math.floor(trnd() * 3)];
-      g.beginPath(); g.roundRect ? g.roundRect(x + 2, y + 2, w - 4, rh - 4, 7) : g.rect(x + 2, y + 2, w - 4, rh - 4); g.fill();
-      g.fillStyle = 'rgba(255,240,215,.55)'; g.fillRect(x + 6, y + 4, w - 14, 3);
-      x += w;
-    }
-  }
-}
+// matte clay: little shine, shadows lifted toward a pastel tint instead of going grey
+const clay = (c, o = {}) => shared(pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 12, specular: 0x1c1c1c, ...o }), .3, .04));
 function skyKit() {
   if (SKYK) return SKYK;
   const T = canvasTex;
   const dome = T(2048, 1024, drawSkyDome, true); dome.repeat.set(2, 1);
-  const stone = T(256, 128, drawStone, true); stone.repeat.set(3, 1);
-  const fall = T(64, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(170,225,255,.35)'); gr.addColorStop(.5, 'rgba(240,252,255,.95)'); gr.addColorStop(1, 'rgba(170,225,255,.35)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 30; i++) g.fillRect(trnd() * w, trnd() * h, 2, 12 + trnd() * 26); }, true);
+  // the waterfall's ripple: soft lighter streaks on syrupy blue
+  const ripple = T(128, 256, (g, w, h) => { g.fillStyle = '#9fdcff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 18; i++) { g.fillStyle = `rgba(255,255,255,${.25 + trnd() * .35})`; const x = trnd() * w, y = trnd() * h; g.beginPath(); g.ellipse(x, y, 4 + trnd() * 6, 18 + trnd() * 30, 0, 0, TAU); g.fill(); } }, true);
   const chev = new THREE.Shape(); chev.moveTo(-.5, -.1); chev.lineTo(0, .3); chev.lineTo(.5, -.1); chev.lineTo(.5, -.4); chev.lineTo(0, 0); chev.lineTo(-.5, -.4); chev.closePath();
-  const starS = new THREE.Shape(); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU + Math.PI / 2, r = k % 2 ? .2 : .5; k ? starS.lineTo(Math.cos(a) * r, Math.sin(a) * r) : starS.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  const starS = new THREE.Shape(); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU + Math.PI / 2, r = k % 2 ? .22 : .5; k ? starS.lineTo(Math.cos(a) * r, Math.sin(a) * r) : starS.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
   const flatShape = (s) => { const g = new THREE.ShapeGeometry(s); g.rotateX(-Math.PI / 2); return shared(g); };
-  const bigStar = new THREE.ExtrudeGeometry(starS, { depth: .35, bevelEnabled: true, bevelThickness: .14, bevelSize: .1, bevelSegments: 3 }); bigStar.center();
-  const rock = new THREE.LatheGeometry([[0, -1.55], [.22, -1.4], [.5, -1.05], [.75, -.65], [.92, -.3], [1, -.08], [1.02, 0]].map(([x, y]) => new THREE.Vector2(x, y)), 16);
-  { const p = rock.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), w = 1 + Math.sin(i * 2.1) * .05 * (y < -.05 ? 1 : 0); p.setX(i, p.getX(i) * w); p.setZ(i, p.getZ(i) * w); } rock.computeVertexNormals(); }
+  const bigStar = new THREE.ExtrudeGeometry(starS, { depth: .35, bevelEnabled: true, bevelThickness: .16, bevelSize: .12, bevelSegments: 6, curveSegments: 8 }); bigStar.center();
+  // the island underside: a smooth rounded cone of warm clay
+  const rock = new THREE.LatheGeometry([[0, -1.5], [.12, -1.47], [.3, -1.32], [.5, -1.08], [.68, -.8], [.83, -.5], [.94, -.24], [1, -.08], [1, 0]].map(([x, y]) => new THREE.Vector2(x, y)), 48);
+  rock.computeVertexNormals();
   SKYK = {
-    tile: shared(roundedBoxGeo(.28, 6)), tileMat: softMat(0xffffff, .28, .0, { shininess: 50, specular: 0x666666 }), cloud: shared(cloudGeo()),
-    cloudMat: shared(pastel(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 0, specular: 0, emissive: 0xffffff, emissiveIntensity: .1 }), .45, .0)),
-    decal: shared(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6, depthWrite: false })),
+    tile: shared(roundedBoxGeo(.3, 5)), tileMat: clay(0xffffff, { shininess: 22, specular: 0x2a2a2a }), cloud: shared(cloudGeo()), cloudFar: shared(cloudGeo(12, 8)),
+    ball: shared(new THREE.SphereGeometry(1, 18, 12)), half: shared(new THREE.SphereGeometry(1, 36, 12, 0, TAU, 0, Math.PI / 2)),
+    cloudMat: shared(pastel(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 0, specular: 0, emissive: 0xffffff, emissiveIntensity: .14 }), .5, .02)),
+    decal: shared(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .62, depthWrite: false })),
     chev: flatShape(chev), star: flatShape(starS), bigStar: shared(bigStar),
     dome: shared(new THREE.MeshBasicMaterial({ map: dome, side: THREE.BackSide, fog: false, depthWrite: false })),
-    rock: shared(rock), rockMat: shared(pastel(new THREE.MeshPhongMaterial({ map: stone, shininess: 10, specular: 0x111111 }), .25, .06)),
-    grass: softMat(0x8fdd6c, .3, .08), drip: softMat(0x7fd15c, .3, .05), leaf: softMat(0x7fd36a, .35, .08), leaf2: softMat(0xa8e68c, .35, .1), bark: softMat(0xa87650, .1, .02),
-    wall: softMat(0xfff4e6, .25, .06), roofP: softMat(0xff9ec8, .3, .08), roofL: softMat(0xc9a6ff, .3, .08), roofB: softMat(0x9fd2ff, .3, .08), white: softMat(0xffffff, .2, .05),
-    gold: shared(pastel(new THREE.MeshPhongMaterial({ color: 0xffd65a, emissive: 0x6a4a00, emissiveIntensity: .2, shininess: 80, specular: 0x777777 }), .3, .05)),
-    fall: shared(new THREE.MeshBasicMaterial({ map: fall, transparent: true, depthWrite: false, side: THREE.DoubleSide })), fallTex: fall,
-    check: shared(new THREE.MeshLambertMaterial({ map: T(256, 32, (g, w, h) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#ffffff' : '#3a4a78'; g.fillRect(i * 16, j * 16, 16, 16); } }), side: THREE.DoubleSide }))
+    rock: shared(rock), rockMat: clay(0xf2cfa6), rockMat2: clay(0xedc39c),
+    grass: clay(0x8edc9a), grass2: clay(0xa9ebb0), leaf: clay(0x7fd48e), leaf2: clay(0xb0eeb4), bark: clay(0xd8a77d),
+    wall: clay(0xfff6ea), roofP: clay(0xff8ec9), roofL: clay(0xb8b0ff), roofB: clay(0x7fd8ff), white: clay(0xffffff),
+    flowerP: clay(0xff8ec9), flowerY: clay(0xffd166), stone: clay(0xd9e6f2),
+    gold: shared(pastel(new THREE.MeshPhongMaterial({ color: 0xffd166, emissive: 0x6a4a00, emissiveIntensity: .15, shininess: 28, specular: 0x3a3a3a }), .3, .04)),
+    // syrupy water: rounded, see-through blue with soft light streaks drifting down
+    water: shared(pastel(new THREE.MeshPhongMaterial({ map: ripple, color: 0xffffff, transparent: true, opacity: .86, shininess: 60, specular: 0x666666, emissive: 0x2a6f99, emissiveIntensity: .12 }), .45, .06)), waterTex: ripple,
+    check: shared(new THREE.MeshLambertMaterial({ map: T(256, 32, (g, w, h) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#ffffff' : '#6b7bff'; g.fillRect(i * 16, j * 16, 16, 16); } }), side: THREE.DoubleSide }))
   };
   return SKYK;
 }
@@ -1094,60 +1087,92 @@ function addCloudPlatform(p, rnd, puffs, tiles, decals) {
     else puffs.push({ x: q.x + p.x, y: q.y, z: q.z + p.z, s: q.s });
   };
   const by = p.y0 - 1.5;
-  for (let z = -p.hd; z <= p.hd; z += 2) for (const sx of [-1, 1]) { const s = 1 + rnd() * .9; puff({ x: sx * (p.hw + s * .35), y: by + rnd() * .5, z: z + (rnd() - .5) * .6, s }); }
-  for (let x = -p.hw + 1.6; x < p.hw; x += 2) for (const z of [-p.hd, p.hd]) puff({ x: x + (rnd() - .5) * .5, y: by - rnd() * .3, z: z + (rnd() - .5) * .5, s: 1 + rnd() * .6 });
-  for (let z = -p.hd + 1.5; z < p.hd; z += 3) { const s = Math.min(p.hw, 3) + rnd() * 1.4; puff({ x: (rnd() - .5) * p.hw, y: by - .5 - s * .6, z, s }); }
+  for (let z = -p.hd; z <= p.hd; z += 2.5) for (const sx of [-1, 1]) { const s = 1 + rnd() * .9; puff({ x: sx * (p.hw + s * .35), y: by + rnd() * .5, z: z + (rnd() - .5) * .6, s }); }
+  for (let x = -p.hw + 1.6; x < p.hw; x += 2.5) for (const z of [-p.hd, p.hd]) puff({ x: x + (rnd() - .5) * .5, y: by - rnd() * .3, z: z + (rnd() - .5) * .5, s: 1 + rnd() * .6 });
+  for (let z = -p.hd + 1.5; z < p.hd; z += 4) { const s = Math.min(p.hw, 3) + rnd() * 1.4; puff({ x: (rnd() - .5) * p.hw, y: by - .5 - s * .6, z, s }); }
   if (mv) {
     for (const q of T) { const m = new THREE.Mesh(K.tile, gloss1(q.col)); m.position.set(q.x - p.x, q.y, q.z - p.z); m.scale.set(q.sx, q.sy, q.sz); m.castShadow = m.receiveShadow = true; g.add(m); }
     g.position.set(p.x, 0, p.z); p.mesh = g; world.add(g);
   }
 }
-const gloss1 = (c) => pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 50, specular: 0x666666 }), .28, .0);
-// a floating island: stacked-stone underside, a grassy top whose moss drips over the edge, round trees, maybe a windmill house or a castle
+const gloss1 = (c) => pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 22, specular: 0x2a2a2a }), .3, .04);
+// a floating island: a soft clay underside, a mossy grass top made of round lumps, sphere-cluster trees and bushes,
+// little flowers, and optionally a windmill house, a castle or a syrupy waterfall
 function makeSkyIsland(s, rnd, o = {}) {
   const K = skyKit(), g = new THREE.Group(), add = (geo, mat, sx, sy, sz, x, y, z, par = g) => { const m = new THREE.Mesh(geo, mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); par.add(m); return m; };
-  add(K.rock, K.rockMat, s, s * 1.15, s, 0, 0, 0);
-  add(halfSphereGeo, K.grass, s * 1.07, s * .2, s * 1.07, 0, -.02, 0);
-  for (let k = 0; k < 16; k++) { const a = k / 16 * TAU + rnd() * .2, l = .14 + rnd() * .22; add(sphereGeo, K.drip, s * .13, s * l, s * .13, Math.cos(a) * s * 1.02, -s * l * .55, Math.sin(a) * s * 1.02); }
-  for (let k = 0; k < 7; k++) { const a = rnd() * TAU; add(K.cloud, K.cloudMat, s * (.25 + rnd() * .15), s * .18, s * (.25 + rnd() * .15), Math.cos(a) * s * .55, -s * (1.05 + rnd() * .3), Math.sin(a) * s * .55); }
-  const nT = o.castle ? 3 : 2 + Math.floor(rnd() * 3);
-  for (let k = 0; k < nT; k++) {
-    const a = rnd() * TAU, r = s * (.35 + rnd() * .45), x = Math.cos(a) * r, z = Math.sin(a) * r, h = s * (.2 + rnd() * .12);
+  add(K.rock, K.rockMat, s, s * 1.1, s, 0, 0, 0);
+  for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + rnd(), y = -s * (.35 + rnd() * .5), r = s * (1 - (-y / s) * .55); add(K.ball, k % 2 ? K.rockMat2 : K.rockMat, s * .3, s * .26, s * .3, Math.cos(a) * r * .8, y, Math.sin(a) * r * .8); }
+  add(K.half, K.grass, s * 1.08, s * .2, s * 1.08, 0, -.02, 0);
+  // the grass rolls over the edge in plump lumps
+  for (let k = 0; k < 22; k++) { const a = k / 22 * TAU, r = s * (1.0 + Math.sin(k * 1.9) * .03), l = .1 + rnd() * .1; add(K.ball, k % 3 ? K.grass : K.grass2, s * .16, s * l, s * .16, Math.cos(a) * r, -s * l * .45, Math.sin(a) * r); }
+  for (let k = 0; k < 6; k++) { const a = rnd() * TAU; add(K.cloud, K.cloudMat, s * (.28 + rnd() * .15), s * .2, s * (.28 + rnd() * .15), Math.cos(a) * s * .5, -s * (1.05 + rnd() * .3), Math.sin(a) * s * .5); }
+  const tree = (x, z, h) => {
     add(unitCyl, K.bark, s * .045, h, s * .045, x, h / 2, z);
-    add(sphereGeo, K.leaf, s * .19, s * .18, s * .19, x, h + s * .12, z);
-    add(sphereGeo, K.leaf2, s * .13, s * .12, s * .13, x - s * .09, h + s * .2, z + s * .05);
-    add(sphereGeo, K.leaf2, s * .11, s * .1, s * .11, x + s * .1, h + s * .06, z - s * .05);
-  }
-  for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI + (o.fenceA || 0); add(unitBox, K.white, s * .02, s * .07, s * .02, Math.cos(a) * s * .9, s * .04, Math.sin(a) * s * .9); }
+    add(K.ball, K.leaf, s * .17, s * .16, s * .17, x, h + s * .1, z);
+    add(K.ball, K.leaf2, s * .12, s * .11, s * .12, x - s * .08, h + s * .19, z + s * .04);
+    add(K.ball, K.leaf2, s * .1, s * .09, s * .1, x + s * .1, h + s * .05, z - s * .04);
+    add(K.ball, K.leaf, s * .09, s * .08, s * .09, x + s * .03, h + s * .02, z + s * .11);
+  };
+  const nT = o.castle ? 3 : 2 + Math.floor(rnd() * 3);
+  for (let k = 0; k < nT; k++) { const a = rnd() * TAU, r = s * (.45 + rnd() * .38); tree(Math.cos(a) * r, Math.sin(a) * r, s * (.16 + rnd() * .1)); }
+  for (let k = 0; k < 6; k++) { const a = rnd() * TAU, r = s * (.3 + rnd() * .6), b = s * (.06 + rnd() * .05); add(K.ball, rnd() < .5 ? K.leaf : K.grass2, b * 1.2, b, b * 1.2, Math.cos(a) * r, b * .5, Math.sin(a) * r); }
+  for (let k = 0; k < 12; k++) { const a = rnd() * TAU, r = s * (.2 + rnd() * .75); add(K.ball, rnd() < .5 ? K.flowerP : K.flowerY, s * .03, s * .03, s * .03, Math.cos(a) * r, s * .05, Math.sin(a) * r); }
   if (o.house) {
-    const hx = -s * .2, hz = s * .15;
-    add(unitBox, K.wall, s * .3, s * .26, s * .28, hx, s * .13, hz);
-    const roof = add(new THREE.ConeGeometry(.75, 1, 4), K.roofP, s * .32, s * .2, s * .3, hx, s * .36, hz); roof.rotation.y = Math.PI / 4;
-    const mill = new THREE.Group(); mill.position.set(hx, s * .3, hz + s * .16); g.add(mill);
-    add(sphereGeo, K.roofP, s * .03, s * .03, s * .03, 0, 0, 0, mill);
-    for (let k = 0; k < 4; k++) { const b = add(unitBox, K.wall, s * .045, s * .26, s * .01, 0, 0, 0, mill); b.position.set(Math.cos(k * Math.PI / 2) * s * .13, Math.sin(k * Math.PI / 2) * s * .13, 0); b.rotation.z = k * Math.PI / 2 + Math.PI / 2; }
+    const hx = -s * .15, hz = s * .1, H = s * .42;
+    add(unitCyl, K.wall, s * .14, H, s * .14, hx, H / 2, hz);
+    for (const y of [.3, .62]) add(K.ball, K.roofB, s * .04, s * .05, s * .02, hx, H * y, hz + s * .14);
+    add(new THREE.ConeGeometry(1, 1, 40), K.roofP, s * .19, s * .2, s * .19, hx, H + s * .09, hz);
+    add(K.ball, K.roofP, s * .03, s * .03, s * .03, hx, H + s * .2, hz);
+    const mill = new THREE.Group(); mill.position.set(hx, H * .82, hz + s * .17); g.add(mill);
+    add(K.ball, K.flowerY, s * .035, s * .035, s * .035, 0, 0, 0, mill);
+    for (let k = 0; k < 4; k++) {
+      const arm = new THREE.Group(); arm.rotation.z = k * Math.PI / 2; mill.add(arm);
+      add(K.tile, K.flowerY, s * .03, s * .3, s * .02, 0, s * .15, 0, arm);
+      add(K.tile, k % 2 ? K.roofP : K.white, s * .09, s * .2, s * .015, s * .05, s * .19, 0, arm);
+    }
     SKYW.mills.push(mill);
   }
   if (o.castle) {
     const roofs = [K.roofL, K.roofP, K.roofB];
     for (const [x, z, h, r] of [[0, 0, .9, .16], [-.32, .15, .6, .11], [.32, .12, .65, .11], [-.15, -.3, .5, .1], [.2, -.28, .55, .1]]) {
       add(unitCyl, K.wall, s * r, s * h, s * r, x * s, s * h / 2, z * s);
-      add(new THREE.ConeGeometry(1, 1, 16), roofs[Math.floor(rnd() * 3)], s * r * 1.35, s * r * 2.2, s * r * 1.35, x * s, s * h + s * r * 1.1, z * s);
-      const flag = add(new THREE.PlaneGeometry(1, .6), K.roofP, s * .08, s * .08, 1, x * s + s * .04, s * h + s * r * 2.4, z * s); flag.material = K.roofP;
+      add(new THREE.ConeGeometry(1, 1, 40), roofs[Math.floor(rnd() * 3)], s * r * 1.35, s * r * 2.2, s * r * 1.35, x * s, s * h + s * r * 1.1, z * s);
+      add(K.ball, K.flowerY, s * .025, s * .025, s * .025, x * s, s * h + s * r * 2.25, z * s);
     }
-    add(unitBox, K.wall, s * .7, s * .3, s * .4, 0, s * .15, 0);
+    add(K.tile, K.wall, s * .7, s * .3, s * .4, 0, s * .15, 0);
   }
   if (o.fall) {
-    const a = o.fallA ?? rnd() * TAU, fx = Math.cos(a) * s, fz = Math.sin(a) * s, len = s * 2.4;
-    const f = add(new THREE.PlaneGeometry(1, 1), K.fall, s * .32, len, 1, fx, -len / 2 + s * .05, fz); f.rotation.y = -a + Math.PI / 2;
-    for (let k = 0; k < 5; k++) add(K.cloud, K.cloudMat, s * .2, s * .15, s * .2, fx + (rnd() - .5) * s * .35, -len + rnd() * s * .12, fz + (rnd() - .5) * s * .35);
+    // a rounded ribbon of syrupy water pouring over the edge, landing in a pool of bubbles and cloud
+    const a = o.fallA ?? rnd() * TAU, fx = Math.cos(a) * s * .98, fz = Math.sin(a) * s * .98, len = s * 2.2;
+    const f = add(K.ball, K.water, s * .16, len / 2, s * .07, fx, -len / 2 + s * .05, fz); f.rotation.y = -a + Math.PI / 2;
+    add(K.ball, K.water, s * .19, s * .07, s * .12, fx * .97, s * .02, fz * .97);
+    for (let k = 0; k < 5; k++) add(K.ball, K.water, s * (.05 + rnd() * .04), s * (.05 + rnd() * .04), s * (.05 + rnd() * .04), fx + (rnd() - .5) * s * .3, -len + s * .05 + rnd() * s * .08, fz + (rnd() - .5) * s * .3);
+    for (let k = 0; k < 5; k++) add(K.cloud, K.cloudMat, s * .2, s * .15, s * .2, fx + (rnd() - .5) * s * .4, -len - s * .05 + rnd() * s * .1, fz + (rnd() - .5) * s * .4);
   }
   return g;
+}
+// bake a group's static meshes into one mesh per material: far fewer draw calls for the same look
+function mergeByMaterial(group, keep = new Set()) {
+  group.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert(), byMat = new Map(), drop = [];
+  group.traverse(o => {
+    if (!o.isMesh || o.isInstancedMesh || o.material.vertexColors) return;   // vertex-coloured clouds keep their own colours
+    for (let q = o; q && q !== group; q = q.parent) if (keep.has(q)) return;
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
+    if (!byMat.has(o.material)) byMat.set(o.material, []);
+    byMat.get(o.material).push(g); drop.push(o);
+  });
+  for (const o of drop) o.parent.remove(o);
+  for (const [mat, list] of byMat) group.add(new THREE.Mesh(mergeGeos(list), mat));
+  return group;
 }
 function makeBalloon(cols, rnd) {
   const g = new THREE.Group(), K = skyKit();
   const tex = canvasTex(256, 128, (gg, w, h) => drawStripes(gg, w, h, cols[0], cols[1], 12, true));
-  const env = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18), pastel(new THREE.MeshPhongMaterial({ map: tex, shininess: 40, specular: 0x333333 }), .35, .1));
+  const env = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), pastel(new THREE.MeshPhongMaterial({ map: tex, shininess: 14, specular: 0x1c1c1c }), .3, .05));
   env.scale.set(2.3, 2.7, 2.3); g.add(env);
   const neck = new THREE.Mesh(new THREE.ConeGeometry(1, 1.2, 16, 1, true), new THREE.MeshPhongMaterial({ color: cols[0], side: THREE.DoubleSide })); neck.rotation.x = Math.PI; neck.scale.set(.9, 1, .9); neck.position.y = -2.6; g.add(neck);
   const basket = new THREE.Mesh(K.tile, K.bark); basket.scale.set(.95, .7, .95); basket.position.y = -3.7; g.add(basket);
@@ -1155,7 +1180,7 @@ function makeBalloon(cols, rnd) {
   return g;
 }
 function buildSkyWorld(rnd) {
-  const K = skyKit(), puffs = [], tiles = [], decals = [];
+  const K = skyKit(), puffs = [], far = [], tiles = [], decals = [];
   SKYW = { anim: [], mills: [] };
   const dome = new THREE.Mesh(new THREE.CylinderGeometry(190, 190, 170, 48, 1, true), K.dome); dome.renderOrder = -10; dome.position.y = 50; world.add(dome); SKYW.dome = dome;
   for (const p of P) addCloudPlatform(p, rnd, puffs, tiles, decals);
@@ -1165,14 +1190,15 @@ function buildSkyWorld(rnd) {
   placed(K.star, K.decal, decals.filter(d => d.star), (q, o) => { o.position.set(q.x, q.y, q.z); o.rotation.y = q.x * 3; o.scale.set(q.s, 1, q.s); });
   // a sea of clouds below and cumulus towers of every size at every distance
   const cumulus = (x, y, z, s) => {
-    for (let k = 0; k < 7; k++) { const t = k / 6 - .5; puffs.push({ x: x + t * s * 2.4, y: y + Math.cos(t * Math.PI) * s * .5, z: z + (rnd() - .5) * s * .6, s: s * (.55 + Math.cos(t * Math.PI) * .45) }); }
-    for (let k = 0; k < 3; k++) puffs.push({ x: x + (k - 1) * s * .6, y: y + s * .95, z: z + (rnd() - .5) * s * .4, s: s * (.45 + rnd() * .2) });
+    for (let k = 0; k < 7; k++) { const t = k / 6 - .5; far.push({ x: x + t * s * 2.4, y: y + Math.cos(t * Math.PI) * s * .5, z: z + (rnd() - .5) * s * .6, s: s * (.55 + Math.cos(t * Math.PI) * .45) }); }
+    for (let k = 0; k < 3; k++) far.push({ x: x + (k - 1) * s * .6, y: y + s * .95, z: z + (rnd() - .5) * s * .4, s: s * (.45 + rnd() * .2) });
   };
   for (let z = 30; z > goalZ - 130; z -= 6) {
-    for (let k = 0; k < 4; k++) { const side = rnd() < .5 ? -1 : 1; puffs.push({ x: side * (8 + rnd() * 50), y: -10 + rnd() * 4, z: z + rnd() * 6, s: 4 + rnd() * 5 }); }
+    for (let k = 0; k < 2; k++) { const side = rnd() < .5 ? -1 : 1; far.push({ x: side * (8 + rnd() * 50), y: -10 + rnd() * 4, z: z + rnd() * 6, s: 5 + rnd() * 6 }); }
     if (rnd() < .3) { const side = rnd() < .5 ? -1 : 1, far = rnd() < .55; cumulus(side * (far ? 60 + rnd() * 50 : 24 + rnd() * 18), (far ? 2 : -4) + rnd() * 8, z, far ? 6 + rnd() * 5 : 2.5 + rnd() * 2); }
   }
   placed(K.cloud, K.cloudMat, puffs, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .8, q.s); });
+  placed(K.cloudFar, K.cloudMat, far, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .8, q.s); });
   // floating islands close beside the course and far away, with a castle island in the distance
   let castle = false;
   for (let z = -6, i = 0; z > goalZ - 60; z -= 30 + rnd() * 22, i++) {
@@ -1180,10 +1206,10 @@ function buildSkyWorld(rnd) {
     const isl = makeSkyIsland(s, rnd, { house: !far && i % 2 === 0, fall: rnd() < .7, castle: far && !castle && z < -100, fallA: side > 0 ? Math.PI : 0, fenceA: side > 0 ? Math.PI * .5 : -Math.PI * .5 });
     if (far && !castle && z < -100) castle = true;
     isl.position.set(side * (far ? 55 + rnd() * 25 : 17 + rnd() * 6), (far ? 9 : 1) + rnd() * 4, z); isl.rotation.y = side > 0 ? 0 : Math.PI;
-    world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
+    mergeByMaterial(isl, new Set(SKYW.mills)); world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
   }
-  const goalIsl = makeSkyIsland(13, rnd, { castle: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); world.add(goalIsl);
-  const bcols = [['#ffb6d5', '#ffffff'], ['#a9dcff', '#ffffff'], ['#ffe69a', '#ffb6d5'], ['#d8bcff', '#ffffff'], ['#b4efd6', '#ffe69a']];
+  const goalIsl = makeSkyIsland(13, rnd, { castle: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); mergeByMaterial(goalIsl); world.add(goalIsl);
+  const bcols = [['#ffb3e6', '#ffffff'], ['#7fd8ff', '#ffd6ec'], ['#ffeba7', '#ffb3e6'], ['#b8b0ff', '#ffffff'], ['#a3d8ff', '#ffeba7']];
   for (let z = -20, i = 0; z > goalZ - 30; z -= 40 + rnd() * 25, i++) {
     const g = makeBalloon(bcols[i % bcols.length], rnd);
     const near = i % 3 === 1; g.scale.setScalar(near ? 1 : .8);
@@ -1210,7 +1236,7 @@ function updateSkyWorld(dt) {
   for (const a of SKYW.anim) a.m.position.y = a.y + Math.sin(worldT * .4 + a.ph) * .6;
   for (const m of SKYW.mills) m.rotation.z += dt * 1.2;
   if (SKYW.star) SKYW.star.rotation.y = Math.sin(worldT * 1.2) * .5;
-  skyKit().fallTex.offset.y = (skyKit().fallTex.offset.y + dt * .9) % 1;
+  skyKit().waterTex.offset.y = (skyKit().waterTex.offset.y + dt * .6) % 1;
 }
 function addRails(railMat, postMat) {
   if (!FENCES.length) return;
