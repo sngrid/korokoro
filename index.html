@@ -369,6 +369,7 @@ label.btn { display: inline-flex; justify-content: center; align-items: center; 
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 (() => {
 'use strict';
@@ -965,7 +966,7 @@ function placed(geo, mat, list, set) {
 
 /* ---------- sky stage art ---------- */
 // A soft pastel toy world: the course is made of jelly-like rounded tiles sitting on billowy clouds;
-// grassy floating islands with waterfalls, a windmill and a castle fill the middle distance under a blue sky full of cumulus.
+// grassy floating islands with waterfalls and the windmill model (fusha.glb) fill the middle distance under a blue sky full of cumulus.
 // colours follow the design sheet: main yellow FFEBA7, main pink FFB3E6, main blue 7FD8FF, light pink FFD6EC, purple 6B7BFF accents
 const SKYPAL = {
   pink: [0xff9ad9, 0xffe07a, 0x5fcdff], mint: [0x7fe0a0, 0x5fcdff, 0xffe07a], lemon: [0xffe07a, 0xff9ad9, 0x5fcdff],
@@ -1099,9 +1100,14 @@ function addCloudPlatform(p, rnd, puffs, tiles, decals) {
 }
 const gloss1 = (c) => pastel(new THREE.MeshStandardMaterial({ color: c, roughness: .35, metalness: .05 }), .12, 0);
 // a floating island: a soft clay underside, a mossy grass top made of round lumps, sphere-cluster trees and bushes,
-// little flowers, and optionally a windmill house, a castle or a syrupy waterfall
+// little flowers and a syrupy waterfall; or, for o.model, a slot that receives the GLB island
 function makeSkyIsland(s, rnd, o = {}) {
   const K = skyKit(), g = new THREE.Group(), add = (geo, mat, sx, sy, sz, x, y, z, par = g) => { const m = new THREE.Mesh(geo, mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); par.add(m); return m; };
+  if (o.model) {   // the GLB (a complete windmill island) is dropped into this slot once loaded; we only add clouds under it
+    const slot = new THREE.Group(); slot.userData.s = s; g.add(slot); SKYW.modelSlots.push(slot);
+    for (let k = 0; k < 6; k++) { const a = rnd() * TAU; add(K.cloud, K.cloudMat, s * (.3 + rnd() * .15), s * .2, s * (.3 + rnd() * .15), Math.cos(a) * s * .45, -s * (1.3 + rnd() * .3), Math.sin(a) * s * .45); }
+    return g;
+  }
   add(K.rock, K.rockMat, s, s * 1.1, s, 0, 0, 0);
   for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + rnd(), y = -s * (.35 + rnd() * .5), r = s * (1 - (-y / s) * .55); add(K.ball, k % 2 ? K.rockMat2 : K.rockMat, s * .3, s * .26, s * .3, Math.cos(a) * r * .8, y, Math.sin(a) * r * .8); }
   add(K.half, K.grass, s * 1.08, s * .2, s * 1.08, 0, -.02, 0);
@@ -1115,34 +1121,10 @@ function makeSkyIsland(s, rnd, o = {}) {
     add(K.ball, K.leaf2, s * .1, s * .09, s * .1, x + s * .1, h + s * .05, z - s * .04);
     add(K.ball, K.leaf, s * .09, s * .08, s * .09, x + s * .03, h + s * .02, z + s * .11);
   };
-  const nT = o.castle ? 3 : 2 + Math.floor(rnd() * 3);
-  for (let k = 0; k < nT; k++) { const a = rnd() * TAU, r = s * (.45 + rnd() * .38); tree(Math.cos(a) * r, Math.sin(a) * r, s * (.16 + rnd() * .1)); }
+  const nT = 2 + Math.floor(rnd() * 2);
+  for (let k = 0; k < nT; k++) { const a = rnd() * TAU, r = s * (.6 + rnd() * .3); tree(Math.cos(a) * r, Math.sin(a) * r, s * (.16 + rnd() * .1)); }
   for (let k = 0; k < 6; k++) { const a = rnd() * TAU, r = s * (.3 + rnd() * .6), b = s * (.06 + rnd() * .05); add(K.ball, rnd() < .5 ? K.leaf : K.grass2, b * 1.2, b, b * 1.2, Math.cos(a) * r, b * .5, Math.sin(a) * r); }
   for (let k = 0; k < 12; k++) { const a = rnd() * TAU, r = s * (.2 + rnd() * .75); add(K.ball, rnd() < .5 ? K.flowerP : K.flowerY, s * .03, s * .03, s * .03, Math.cos(a) * r, s * .05, Math.sin(a) * r); }
-  if (o.house) {
-    const hx = -s * .15, hz = s * .1, H = s * .42;
-    add(unitCyl, K.wall, s * .14, H, s * .14, hx, H / 2, hz);
-    for (const y of [.3, .62]) add(K.ball, K.roofB, s * .04, s * .05, s * .02, hx, H * y, hz + s * .14);
-    add(new THREE.ConeGeometry(1, 1, 40), K.roofP, s * .19, s * .2, s * .19, hx, H + s * .09, hz);
-    add(K.ball, K.roofP, s * .03, s * .03, s * .03, hx, H + s * .2, hz);
-    const mill = new THREE.Group(); mill.position.set(hx, H * .82, hz + s * .17); g.add(mill);
-    add(K.ball, K.flowerY, s * .035, s * .035, s * .035, 0, 0, 0, mill);
-    for (let k = 0; k < 4; k++) {
-      const arm = new THREE.Group(); arm.rotation.z = k * Math.PI / 2; mill.add(arm);
-      add(K.tile, K.flowerY, s * .03, s * .3, s * .02, 0, s * .15, 0, arm);
-      add(K.tile, k % 2 ? K.roofP : K.white, s * .09, s * .2, s * .015, s * .05, s * .19, 0, arm);
-    }
-    SKYW.mills.push(mill);
-  }
-  if (o.castle) {
-    const roofs = [K.roofL, K.roofP, K.roofB];
-    for (const [x, z, h, r] of [[0, 0, .9, .16], [-.32, .15, .6, .11], [.32, .12, .65, .11], [-.15, -.3, .5, .1], [.2, -.28, .55, .1]]) {
-      add(unitCyl, K.wall, s * r, s * h, s * r, x * s, s * h / 2, z * s);
-      add(new THREE.ConeGeometry(1, 1, 40), roofs[Math.floor(rnd() * 3)], s * r * 1.35, s * r * 2.2, s * r * 1.35, x * s, s * h + s * r * 1.1, z * s);
-      add(K.ball, K.flowerY, s * .025, s * .025, s * .025, x * s, s * h + s * r * 2.25, z * s);
-    }
-    add(K.tile, K.wall, s * .7, s * .3, s * .4, 0, s * .15, 0);
-  }
   if (o.fall) {
     // a rounded ribbon of syrupy water pouring over the edge, landing in a pool of bubbles and cloud
     const a = o.fallA ?? rnd() * TAU, fx = Math.cos(a) * s * .98, fz = Math.sin(a) * s * .98, len = s * 2.2;
@@ -1152,6 +1134,48 @@ function makeSkyIsland(s, rnd, o = {}) {
     for (let k = 0; k < 5; k++) add(K.cloud, K.cloudMat, s * .2, s * .15, s * .2, fx + (rnd() - .5) * s * .4, -len - s * .05 + rnd() * s * .1, fz + (rnd() - .5) * s * .4);
   }
   return g;
+}
+/* GLB props on the sky islands. Tune the look here. */
+const SKY_MODEL = {
+  url: 'fusha.glb',               // served next to index.html
+  scale: 2.1,                     // model height, as a fraction of the island radius (the model is a whole floating island)
+  offset: { x: 0, y: -1.25, z: 0 }, // position, in island radii from the island's centre top (negative y hangs the rock base below)
+  rotY: Math.PI / 2               // extra turn so the front faces the course
+};
+let skyModel = null, skyModelLoading = false;
+function loadSkyModel() {
+  if (skyModel || skyModelLoading || !THREE.GLTFLoader) return;
+  skyModelLoading = true;
+  new THREE.GLTFLoader().load(SKY_MODEL.url, (gltf) => {
+    const m = gltf.scene;
+    m.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      o.geometry.userData.shared = true;   // kept across stage rebuilds
+      // this file carries no normals and no metallic factor (glTF then means fully metallic, which renders near-black):
+      // give it smooth normals and a matte clay finish
+      if (!o.geometry.attributes.normal || o.material.flatShading) { o.geometry.computeVertexNormals(); o.material.flatShading = false; }
+      o.material.metalness = 0; o.material.roughness = .8; o.material.needsUpdate = true;
+      // glTF colours are already linear and its textures sRGB, so the colour-space sync leaves them alone
+      for (const mt of [].concat(o.material)) Object.assign(mt.userData, { shared: true, lin: true, c0: null, e0: null });
+    });
+    // normalise to unit height, centred, base at y = 0
+    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3()), k = 1 / size.y;
+    m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
+    skyModel = new THREE.Group(); skyModel.add(m);
+    fillModelSlots();
+  }, undefined, (e) => { skyModelLoading = false; console.warn('sky model could not be loaded:', e); });
+}
+function fillModelSlots() {
+  if (!skyModel || !SKYW) return;
+  for (const slot of SKYW.modelSlots) {
+    if (slot.children.length) continue;
+    const s = slot.userData.s, inst = skyModel.clone();
+    inst.scale.setScalar(s * SKY_MODEL.scale);
+    inst.position.set(SKY_MODEL.offset.x * s, SKY_MODEL.offset.y * s, SKY_MODEL.offset.z * s);
+    inst.rotation.y = SKY_MODEL.rotY;
+    slot.add(inst);
+  }
 }
 // bake a group's static meshes into one mesh per material: far fewer draw calls for the same look
 function mergeByMaterial(group, keep = new Set()) {
@@ -1183,7 +1207,7 @@ function makeBalloon(cols, rnd) {
 }
 function buildSkyWorld(rnd) {
   const K = skyKit(), puffs = [], far = [], tiles = [], decals = [];
-  SKYW = { anim: [], mills: [] };
+  SKYW = { anim: [], modelSlots: [] };
   const dome = new THREE.Mesh(new THREE.CylinderGeometry(190, 190, 170, 48, 1, true), K.dome); dome.renderOrder = -10; dome.position.y = 50; world.add(dome); SKYW.dome = dome;
   for (const p of P) addCloudPlatform(p, rnd, puffs, tiles, decals);
   const tm = placed(K.tile, K.tileMat, tiles, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.sx, q.sy, q.sz); });
@@ -1202,16 +1226,15 @@ function buildSkyWorld(rnd) {
   }
   placed(K.cloud, K.cloudMat, puffs, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .8, q.s); });
   placed(K.cloudFar, K.cloudMat, far, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .8, q.s); });
-  // floating islands close beside the course and far away, with a castle island in the distance
-  let castle = false;
+  // floating islands close beside the course (each carrying the windmill model) and plain ones far away
   for (let z = -6, i = 0; z > goalZ - 60; z -= 30 + rnd() * 22, i++) {
     const side = i % 2 ? 1 : -1, far = i % 3 === 2, s = far ? 8 + rnd() * 5 : 5 + rnd() * 2.5;
-    const isl = makeSkyIsland(s, rnd, { house: !far && i % 2 === 0, fall: rnd() < .7, castle: far && !castle && z < -100, fallA: side > 0 ? Math.PI : 0, fenceA: side > 0 ? Math.PI * .5 : -Math.PI * .5 });
-    if (far && !castle && z < -100) castle = true;
+    const isl = makeSkyIsland(s, rnd, { model: !far, fall: rnd() < .7, fallA: side > 0 ? Math.PI : 0, fenceA: side > 0 ? Math.PI * .5 : -Math.PI * .5 });
     isl.position.set(side * (far ? 55 + rnd() * 25 : 17 + rnd() * 6), (far ? 9 : 1) + rnd() * 4, z); isl.rotation.y = side > 0 ? 0 : Math.PI;
-    mergeByMaterial(isl, new Set(SKYW.mills)); world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
+    mergeByMaterial(isl, new Set(SKYW.modelSlots)); world.add(isl); SKYW.anim.push({ m: isl, y: isl.position.y, ph: rnd() * TAU });
   }
-  const goalIsl = makeSkyIsland(13, rnd, { castle: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); mergeByMaterial(goalIsl); world.add(goalIsl);
+  const goalIsl = makeSkyIsland(13, rnd, { model: true, fall: true }); goalIsl.position.set(36, 12, goalZ - 55); mergeByMaterial(goalIsl, new Set(SKYW.modelSlots)); world.add(goalIsl);
+  loadSkyModel(); fillModelSlots();
   const bcols = [['#ffb3e6', '#ffffff'], ['#7fd8ff', '#ffd6ec'], ['#ffeba7', '#ffb3e6'], ['#b8b0ff', '#ffffff'], ['#a3d8ff', '#ffeba7']];
   for (let z = -20, i = 0; z > goalZ - 30; z -= 40 + rnd() * 25, i++) {
     const g = makeBalloon(bcols[i % bcols.length], rnd);
@@ -1237,7 +1260,6 @@ function buildSkyWorld(rnd) {
 function updateSkyWorld(dt) {
   SKYW.dome.position.set(ball.x, 50 + camY * .5, ball.z);
   for (const a of SKYW.anim) a.m.position.y = a.y + Math.sin(worldT * .4 + a.ph) * .6;
-  for (const m of SKYW.mills) m.rotation.z += dt * 1.2;
   if (SKYW.star) SKYW.star.rotation.y = Math.sin(worldT * 1.2) * .5;
   skyKit().waterTex.offset.y = (skyKit().waterTex.offset.y + dt * .6) % 1;
 }
