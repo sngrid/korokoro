@@ -551,6 +551,7 @@ ballMat.onBeforeCompile = (sh) => {
       gl_FragColor = vec4(col, diffuseColor.a);`);
 };
 ballMat.customProgramCacheKey = () => 'faceball';
+ballMat.toneMapped = false;
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 40), ballMat);
 ballMesh.castShadow = true;
 const ballRoot = new THREE.Group();
@@ -752,6 +753,7 @@ for (let i = 0; i < 10; i++) {
 const starGeo = shared(new THREE.ExtrudeGeometry(starShape, { depth: .18, bevelEnabled: true, bevelThickness: .08, bevelSize: .07, bevelSegments: 2 }));
 starGeo.center();
 const starMat = shared(lambert(0xffe066, { emissive: 0xffb300, emissiveIntensity: .35 }));
+starMat.toneMapped = false;   // collectibles stay vivid under the sky stage's filmic tone mapping
 const whiteMat = shared(lambert(0xffffff));
 const flagGeo = shared(new THREE.BufferGeometry());
 flagGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -1, 0, 1.4, -.5, 0], 3));
@@ -766,7 +768,7 @@ const THEMES = {
     thumb: '<svg viewBox="0 0 64 64"><defs><linearGradient id="tkS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd8ff"/><stop offset="1" stop-color="#ffd6ea"/></linearGradient></defs><rect width="64" height="64" fill="url(#tkS)"/><g fill="none" stroke-width="4.5"><path d="M6 46a26 26 0 0 1 52 0" stroke="#ff8fb1"/><path d="M10.5 46a21.5 21.5 0 0 1 43 0" stroke="#ffd54f"/><path d="M15 46a17 17 0 0 1 34 0" stroke="#8fdcc4"/><path d="M19.5 46a12.5 12.5 0 0 1 25 0" stroke="#4fc3f7"/></g><g fill="#fff"><circle cx="9" cy="50" r="8"/><circle cx="19" cy="47" r="9"/><circle cx="28" cy="53" r="7"/><circle cx="42" cy="53" r="7"/><circle cx="51" cy="47" r="9"/><circle cx="60" cy="51" r="8"/><rect y="52" width="64" height="12"/></g><path d="M32 7l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z" fill="#ffd54f" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="53" cy="14" rx="4.5" ry="5.5" fill="#ff8fb1"/><path d="M53 19.5v6" stroke="#fff" stroke-width="1"/></svg>',
     name: 'わたぐもの空', desc: 'ふわふわの雲の上を転がって、虹のゴールへ', swatch: 'linear-gradient(135deg, #bfe6ff, #ffd6e8)',
     css: 'linear-gradient(180deg, #3aaef0 0%, #6cc6f6 40%, #a7dcfb 60%, #d8efff 72%, #eef6ff 100%)',
-    fog: 0xe6f6ff, fogNear: 70, fogFar: 320, hemi: [0xffffff, 0xe6dcff], hemiI: .66, sun: 0xfff6ec, sunI: .5,
+    fog: 0xfbf8ff, fogNear: 60, fogFar: 240, hemi: [0xfffbe6, 0xf3d6ee], hemiI: .55, sun: 0xffefd2, sunI: .95,
     goal: [0xffb3c7, 0xffcfa3, 0xfff0a0, 0xb9f0cf, 0xaedcff, 0xd3c4ff],
     fall: 'ふわっ… 旗のところから再開',
     visitorMsg: ['あれ？ なにか近づいてくる…', 'UFOがプレゼントを落としていった！']
@@ -966,8 +968,8 @@ function placed(geo, mat, list, set) {
 // grassy floating islands with waterfalls, a windmill and a castle fill the middle distance under a blue sky full of cumulus.
 // colours follow the design sheet: main yellow FFEBA7, main pink FFB3E6, main blue 7FD8FF, light pink FFD6EC, purple 6B7BFF accents
 const SKYPAL = {
-  pink: [0xffb3e6, 0xffeba7, 0x7fd8ff], mint: [0x9fe6b4, 0x7fd8ff, 0xffeba7], lemon: [0xffeba7, 0xffb3e6, 0x7fd8ff],
-  lav: [0xc4b8ff, 0xffb3e6, 0x7fd8ff], peach: [0xffd6ec, 0xffeba7, 0xffb3e6], sky: [0x7fd8ff, 0xc4b8ff, 0xffeba7]
+  pink: [0xff9ad9, 0xffe07a, 0x5fcdff], mint: [0x7fe0a0, 0x5fcdff, 0xffe07a], lemon: [0xffe07a, 0xff9ad9, 0x5fcdff],
+  lav: [0xb3a3ff, 0xff9ad9, 0x5fcdff], peach: [0xffc0e0, 0xffe07a, 0xff9ad9], sky: [0x5fcdff, 0xb3a3ff, 0xffe07a]
 };
 const ZONE_OF = { 0xffbfd8: 'pink', 0xaeeed8: 'mint', 0xffeaa6: 'lemon', 0xd3c4ff: 'lav', 0xffcdb0: 'peach', 0xaedcff: 'sky' };
 let SKYK = null, SKYW = null;
@@ -982,7 +984,7 @@ function pastel(mat, rim, lift) {
   mat.customProgramCacheKey = () => `pastel${rim}/${lift}`;
   return mat;
 }
-const softMat = (c, rim = .35, lift = .1, o = {}) => shared(pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 30, specular: 0x2a2a2a, ...o }), rim, lift));
+const softMat = (c, rim = .35, lift = .1, o = {}) => shared(pastel(new THREE.MeshStandardMaterial({ color: c, roughness: .55, metalness: .02, ...o }), rim, lift));
 // a unit cube with rounded edges: each vertex is pulled onto a sphere of radius r around the inner box
 function roundedBoxGeo(r = .2, seg = 5) {
   const g = new THREE.BoxGeometry(1, 1, 1, seg, seg, seg), p = g.attributes.position, h = .5 - r, v = new THREE.Vector3(), c = new THREE.Vector3();
@@ -997,7 +999,7 @@ function roundedBoxGeo(r = .2, seg = 5) {
 // cloud puffs: smooth spheres, white on top fading to a lilac shade underneath
 function cloudGeo(w = 16, h = 11) {
   const g = new THREE.SphereGeometry(1, w, h), p = g.attributes.position, col = new Float32Array(p.count * 3), top = new THREE.Color(0xffffff), bot = new THREE.Color(0xf1dcf4);
-  for (let i = 0; i < p.count; i++) { const t = Math.max(0, Math.min(1, (p.getY(i) + .7) / 1.3)); tmpCol.copy(bot).lerp(top, t * t * (3 - 2 * t)); col.set([tmpCol.r, tmpCol.g, tmpCol.b], i * 3); }
+  for (let i = 0; i < p.count; i++) { const t = Math.max(0, Math.min(1, (p.getY(i) + .7) / 1.3)); tmpCol.copy(bot).lerp(top, t * t * (3 - 2 * t)).convertSRGBToLinear(); col.set([tmpCol.r, tmpCol.g, tmpCol.b], i * 3); }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   return g;
 }
@@ -1033,7 +1035,7 @@ function drawSkyDome(g, W, H) {
   g.fillStyle = '#f6f0ff'; g.fillRect(0, H * .78, W, H * .22);
 }
 // matte clay: little shine, shadows lifted toward a pastel tint instead of going grey
-const clay = (c, o = {}) => shared(pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 12, specular: 0x1c1c1c, ...o }), .3, .04));
+const clay = (c, o = {}) => shared(pastel(new THREE.MeshStandardMaterial({ color: c, roughness: .62, metalness: .02, ...o }), .12, 0));
 function skyKit() {
   if (SKYK) return SKYK;
   const T = canvasTex;
@@ -1048,20 +1050,20 @@ function skyKit() {
   const rock = new THREE.LatheGeometry([[0, -1.5], [.12, -1.47], [.3, -1.32], [.5, -1.08], [.68, -.8], [.83, -.5], [.94, -.24], [1, -.08], [1, 0]].map(([x, y]) => new THREE.Vector2(x, y)), 48);
   rock.computeVertexNormals();
   SKYK = {
-    tile: shared(roundedBoxGeo(.3, 5)), tileMat: clay(0xffffff, { shininess: 22, specular: 0x2a2a2a }), cloud: shared(cloudGeo()), cloudFar: shared(cloudGeo(12, 8)),
+    tile: shared(roundedBoxGeo(.42, 6)), tileMat: clay(0xffffff, { roughness: .35, metalness: .05 }), cloud: shared(cloudGeo()), cloudFar: shared(cloudGeo(12, 8)),
     ball: shared(new THREE.SphereGeometry(1, 18, 12)), half: shared(new THREE.SphereGeometry(1, 36, 12, 0, TAU, 0, Math.PI / 2)),
-    cloudMat: shared(pastel(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 0, specular: 0, emissive: 0xffffff, emissiveIntensity: .14 }), .5, .02)),
+    cloudMat: shared(pastel(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xffffff, emissiveIntensity: .12 }), .3, .0)),
     decal: shared(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .62, depthWrite: false })),
     chev: flatShape(chev), star: flatShape(starS), bigStar: shared(bigStar),
-    dome: shared(new THREE.MeshBasicMaterial({ map: dome, side: THREE.BackSide, fog: false, depthWrite: false })),
+    dome: shared(new THREE.MeshBasicMaterial({ map: dome, side: THREE.BackSide, fog: false, depthWrite: false, toneMapped: false })),
     rock: shared(rock), rockMat: clay(0xf2cfa6), rockMat2: clay(0xedc39c),
     grass: clay(0x8edc9a), grass2: clay(0xa9ebb0), leaf: clay(0x7fd48e), leaf2: clay(0xb0eeb4), bark: clay(0xd8a77d),
     wall: clay(0xfff6ea), roofP: clay(0xff8ec9), roofL: clay(0xb8b0ff), roofB: clay(0x7fd8ff), white: clay(0xffffff),
     flowerP: clay(0xff8ec9), flowerY: clay(0xffd166), stone: clay(0xd9e6f2),
-    gold: shared(pastel(new THREE.MeshPhongMaterial({ color: 0xffd166, emissive: 0x6a4a00, emissiveIntensity: .15, shininess: 28, specular: 0x3a3a3a }), .3, .04)),
+    gold: shared(pastel(new THREE.MeshStandardMaterial({ color: 0xffc23d, emissive: 0x6a4a00, emissiveIntensity: .2, roughness: .35, metalness: .05 }), .22, .02)),
     // syrupy water: rounded, see-through blue with soft light streaks drifting down
-    water: shared(pastel(new THREE.MeshPhongMaterial({ map: ripple, color: 0xffffff, transparent: true, opacity: .86, shininess: 60, specular: 0x666666, emissive: 0x2a6f99, emissiveIntensity: .12 }), .45, .06)), waterTex: ripple,
-    check: shared(new THREE.MeshLambertMaterial({ map: T(256, 32, (g, w, h) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#ffffff' : '#6b7bff'; g.fillRect(i * 16, j * 16, 16, 16); } }), side: THREE.DoubleSide }))
+    water: shared(pastel(new THREE.MeshStandardMaterial({ map: ripple, color: 0xffffff, transparent: true, opacity: .86, roughness: .2, metalness: .05, emissive: 0x2a6f99, emissiveIntensity: .12 }), .4, .04)), waterTex: ripple,
+    check: shared(new THREE.MeshStandardMaterial({ roughness: .7, metalness: 0, map: T(256, 32, (g, w, h) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#ffffff' : '#6b7bff'; g.fillRect(i * 16, j * 16, 16, 16); } }), side: THREE.DoubleSide }))
   };
   return SKYK;
 }
@@ -1095,7 +1097,7 @@ function addCloudPlatform(p, rnd, puffs, tiles, decals) {
     g.position.set(p.x, 0, p.z); p.mesh = g; world.add(g);
   }
 }
-const gloss1 = (c) => pastel(new THREE.MeshPhongMaterial({ color: c, shininess: 22, specular: 0x2a2a2a }), .3, .04);
+const gloss1 = (c) => pastel(new THREE.MeshStandardMaterial({ color: c, roughness: .35, metalness: .05 }), .12, 0);
 // a floating island: a soft clay underside, a mossy grass top made of round lumps, sphere-cluster trees and bushes,
 // little flowers, and optionally a windmill house, a castle or a syrupy waterfall
 function makeSkyIsland(s, rnd, o = {}) {
@@ -1172,9 +1174,9 @@ function mergeByMaterial(group, keep = new Set()) {
 function makeBalloon(cols, rnd) {
   const g = new THREE.Group(), K = skyKit();
   const tex = canvasTex(256, 128, (gg, w, h) => drawStripes(gg, w, h, cols[0], cols[1], 12, true));
-  const env = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), pastel(new THREE.MeshPhongMaterial({ map: tex, shininess: 14, specular: 0x1c1c1c }), .3, .05));
+  const env = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), pastel(new THREE.MeshStandardMaterial({ map: tex, roughness: .45, metalness: .03 }), .22, .02));
   env.scale.set(2.3, 2.7, 2.3); g.add(env);
-  const neck = new THREE.Mesh(new THREE.ConeGeometry(1, 1.2, 16, 1, true), new THREE.MeshPhongMaterial({ color: cols[0], side: THREE.DoubleSide })); neck.rotation.x = Math.PI; neck.scale.set(.9, 1, .9); neck.position.y = -2.6; g.add(neck);
+  const neck = new THREE.Mesh(new THREE.ConeGeometry(1, 1.2, 16, 1, true), new THREE.MeshStandardMaterial({ color: cols[0], side: THREE.DoubleSide, roughness: .6, metalness: 0 })); neck.rotation.x = Math.PI; neck.scale.set(.9, 1, .9); neck.position.y = -2.6; g.add(neck);
   const basket = new THREE.Mesh(K.tile, K.bark); basket.scale.set(.95, .7, .95); basket.position.y = -3.7; g.add(basket);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const rope = new THREE.Mesh(unitCyl, whiteMat); rope.scale.set(.03, 1, .03); rope.position.set(sx * .38, -3.1, sz * .38); g.add(rope); }
   return g;
@@ -1185,6 +1187,7 @@ function buildSkyWorld(rnd) {
   const dome = new THREE.Mesh(new THREE.CylinderGeometry(190, 190, 170, 48, 1, true), K.dome); dome.renderOrder = -10; dome.position.y = 50; world.add(dome); SKYW.dome = dome;
   for (const p of P) addCloudPlatform(p, rnd, puffs, tiles, decals);
   const tm = placed(K.tile, K.tileMat, tiles, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.sx, q.sy, q.sz); });
+  if (tm) { for (let i = 0; i < tm.count; i++) { tm.getColorAt(i, tmpCol); tm.setColorAt(i, tmpCol.convertSRGBToLinear()); } tm.instanceColor.needsUpdate = true; }
   if (tm) tm.receiveShadow = true;
   placed(K.chev, K.decal, decals.filter(d => !d.star), (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, 1, q.s); });
   placed(K.star, K.decal, decals.filter(d => d.star), (q, o) => { o.position.set(q.x, q.y, q.z); o.rotation.y = q.x * 3; o.scale.set(q.s, 1, q.s); });
@@ -1225,10 +1228,10 @@ function buildSkyWorld(rnd) {
   const banner = new THREE.Mesh(new THREE.PlaneGeometry(7.2, .9), K.check); banner.position.set(0, 5.2, 0); gate.add(banner);
   gate.position.set(0, 0, goalZ); world.add(gate); SKYW.star = star;
   THEMES.sky.goal.forEach((c, i) => {
-    const t = new THREE.Mesh(new THREE.TorusGeometry(9.6 - i * .5, .25, 10, 48, Math.PI), lambert(c, { emissive: c, emissiveIntensity: .3 }));
+    const t = new THREE.Mesh(new THREE.TorusGeometry(9.6 - i * .5, .25, 10, 48, Math.PI), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .3, roughness: .5, metalness: 0 }));
     t.position.set(0, 0, goalZ - 3); world.add(t);
   });
-  const gpad = new THREE.Mesh(unitCyl, lambert(0xffffff, { emissive: 0xfff4c2, emissiveIntensity: .5 }));
+  const gpad = new THREE.Mesh(unitCyl, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4c2, emissiveIntensity: .5, roughness: .5, metalness: 0 }));
   gpad.scale.set(3, .1, 3); gpad.position.set(0, .05, goalZ); world.add(gpad);
 }
 function updateSkyWorld(dt) {
@@ -2921,6 +2924,15 @@ function buildWorld() {
   scene.fog.color.setHex(TH.fog); scene.fog.near = TH.fogNear; scene.fog.far = TH.fogFar;
   hemi.color.setHex(TH.hemi[0]); hemi.groundColor.setHex(TH.hemi[1]); hemi.intensity = TH.hemiI;
   sun.color.setHex(TH.sun); sun.intensity = TH.sunI || .5;
+  // the sky stage renders through sRGB output with filmic tone mapping for richer gradation; the others keep the plain pipeline
+  const rich = stage === 'sky';
+  renderer.outputEncoding = rich ? THREE.sRGBEncoding : THREE.LinearEncoding;
+  renderer.toneMapping = rich ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+  renderer.toneMappingExposure = rich ? 1.2 : 1;
+  const sr = rich ? 26 : 14, ms = rich ? 2048 : 1024;
+  Object.assign(sun.shadow.camera, { left: -sr, right: sr, top: sr, bottom: -sr, far: rich ? 80 : 50 }); sun.shadow.camera.updateProjectionMatrix();
+  if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+  sun.shadow.radius = rich ? 3 : 1;
   $('#hudIcon').innerHTML = jungle ? BANANA_SVG : sea ? PEARL_SVG : '★';
   $('#resStarLabel').textContent = jungle ? 'バナナ' : sea ? 'しんじゅ' : 'スター';
   (jungle ? buildJungle : sea ? buildSea : buildSky)();
@@ -3881,8 +3893,25 @@ function updateJungle(dt) {
   f.geo.attributes.position.needsUpdate = true;
 }
 
+// Colours are authored as sRGB hex. Under the sRGB pipeline every material's colours are converted to linear
+// (and its textures flagged sRGB); leaving it converts them back. Runs every frame so newly spawned birds etc. follow.
+function syncColorSpace() {
+  const want = renderer.outputEncoding === THREE.sRGBEncoding;
+  scene.traverse(o => {
+    const ms = o.material; if (!ms) return;
+    for (const m of Array.isArray(ms) ? ms : [ms]) {
+      const u = m.userData; if (!!u.lin === want) continue;
+      if (u.c0 === undefined) { u.c0 = m.color ? m.color.getHex() : null; u.e0 = m.emissive ? m.emissive.getHex() : null; }
+      if (u.c0 !== null) { m.color.setHex(u.c0); if (want) m.color.convertSRGBToLinear(); }
+      if (u.e0 !== null) { m.emissive.setHex(u.e0); if (want) m.emissive.convertSRGBToLinear(); }
+      if (m.map) m.map.encoding = want ? THREE.sRGBEncoding : THREE.LinearEncoding;
+      u.lin = want; m.needsUpdate = true;
+    }
+  });
+}
 function updateScene(dt) {
   tAnim += dt;
+  syncColorSpace();
   updateFace(dt);
   if (state !== 'pause') worldT += dt;
   const targetBig = fxState.big > 0 ? 1.6 : 1;
