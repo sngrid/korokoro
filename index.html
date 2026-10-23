@@ -4368,7 +4368,7 @@ function titlePlay(dt) {
   if (!playMove && tAnim > nextPlay) { playMove = TITLE_MOVES[Math.floor(rand() * TITLE_MOVES.length)]; playT = 0; nextPlay = tAnim + playMove.len + 1.6 + rand() * 2.4; }
   return playMove ? { ...playMove.f(playT), busy: true } : {};
 }
-const CAM = { back: 6.8, height: 5.2, ahead: 9, lookY: -.3 };   // play camera: distance behind, height above, look-ahead and look height
+const CAM = { back: 8.4, height: 5.9, ahead: 9, lookY: -.3 };   // play camera: distance behind, height above, look-ahead and look height
 function titleFrame() {
   const ov = $('#titleOv'); if (ov.hidden) return null;
   const W = cvs.clientWidth, H = cvs.clientHeight, top = $('#titleOv .brand').getBoundingClientRect().bottom, bot = $('#titleOv .card').getBoundingClientRect().top, cv = cvs.getBoundingClientRect();
