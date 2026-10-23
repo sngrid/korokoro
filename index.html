@@ -776,7 +776,7 @@ const THEMES = {
   },
   jungle: {
     thumb: '<svg viewBox="0 0 64 64"><defs><linearGradient id="tkJ" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdeeb0"/><stop offset="1" stop-color="#6fb06a"/></linearGradient></defs><rect width="64" height="64" fill="url(#tkJ)"/><path d="M0 0h20c-2 8-10 14-20 16z" fill="#3f8f4a"/><path d="M64 0H42c3 9 12 15 22 17z" fill="#2f7a40"/><path d="M0 64V40c10 2 16 10 18 24z" fill="#2f7a40"/><path d="M64 64V42c-9 2-15 10-16 22z" fill="#3f8f4a"/><path d="M14 0c4 10 2 22 6 30" stroke="#5a7d3a" stroke-width="2" fill="none"/><g transform="translate(32 38) rotate(-12)"><rect x="-12" y="-13" width="24" height="26" rx="8" fill="#b9733a"/><rect x="-12.5" y="-8" width="25" height="3.2" fill="#3b3a3f"/><rect x="-12.5" y="5" width="25" height="3.2" fill="#3b3a3f"/><path d="M-8-13v26M0-13v26M8-13v26" stroke="#9a5c2c" stroke-width="1.2"/></g><path d="M40 12c6 2 10 8 9 15-2-5-6-9-12-11z" fill="#ffd54f" stroke="#c9961e" stroke-width="1.2" stroke-linejoin="round"/></svg>',
-    name: 'ジャングル', desc: 'バナナを集めて、樽大砲で谷をこえよう', swatch: 'linear-gradient(135deg, #4f7f4c, #d8e8c2)',
+    name: 'ジャングル', desc: 'スターを集めて、樽大砲で谷をこえよう', swatch: 'linear-gradient(135deg, #4f7f4c, #d8e8c2)',
     css: 'linear-gradient(180deg, #3faaf0 0%, #7fcaf6 38%, #c4e9fb 55%, #d8f0f4 100%)',
     fog: 0xbfe2ee, fogNear: 45, fogFar: 180, hemi: [0xeaf6ff, 0x86c06a], hemiI: .42, sun: 0xfff0d2, sunI: .8,
     fall: 'ぽちゃん！ 旗のところから再開',
@@ -2084,7 +2084,7 @@ const stdCache = new WeakMap();
 function standardOf(m) {
   if (!m || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial)) return m;
   let s = stdCache.get(m); if (s) return s;
-  s = new THREE.MeshStandardMaterial({ color: m.color, map: m.map, emissive: m.emissive, emissiveIntensity: m.emissiveIntensity, vertexColors: m.vertexColors, side: m.side, transparent: m.transparent, opacity: m.opacity, alphaTest: m.alphaTest, depthWrite: m.depthWrite, fog: m.fog, roughness: .6, metalness: 0 });
+  s = new THREE.MeshStandardMaterial({ color: m.color, map: m.map, emissive: m.emissive, emissiveIntensity: m.emissiveIntensity, vertexColors: m.vertexColors, side: m.side, transparent: m.transparent, opacity: m.opacity, alphaTest: m.alphaTest, depthWrite: m.depthWrite, fog: m.fog, toneMapped: m.toneMapped, roughness: .6, metalness: 0 });
   if (m.userData.shared) shared(s);
   stdCache.set(m, s);
   return s;
@@ -2736,16 +2736,6 @@ function seaKit() {
   return SK;
 }
 
-// a pearl sitting in an open pink clam, so it never looks like the ball
-function makePearl() {
-  const S = seaKit(), g = new THREE.Group();
-  const lo = new THREE.Mesh(halfSphereGeo, S.clam); lo.scale.set(.62, .22, .5); lo.rotation.x = Math.PI; lo.position.y = -.1; g.add(lo);
-  const inner = new THREE.Mesh(unitCyl, S.clamIn); inner.scale.set(.55, .02, .44); inner.position.y = -.1; g.add(inner);
-  const up = new THREE.Mesh(halfSphereGeo, S.clam); up.scale.set(.62, .22, .5); up.position.set(0, -.05, -.3); up.rotation.x = -1.15; g.add(up);
-  const pearl = new THREE.Mesh(S.pearlGeo, S.pearl); pearl.position.y = .2; g.add(pearl);
-  const hi = new THREE.Mesh(sphereGeo, S.white); hi.scale.setScalar(.09); hi.position.set(-.12, .35, .22); g.add(hi);
-  return g;
-}
 function makeCrab() {
   const g = new THREE.Group();
   const red = shared(lambert(0xe8553f)), light = shared(lambert(0xf7a08a)), white = shared(lambert(0xffffff)), eye = shared(lambert(0x2b1d18)), pink = shared(lambert(0xff9fb0));
@@ -3275,8 +3265,6 @@ function makeBumperMesh() {
   return g;
 }
 
-const PEARL_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px"><circle cx="12" cy="12" r="8" fill="#fff6ee" stroke="#c9a0b4" stroke-width="1.5"/><circle cx="9.5" cy="9.5" r="2.4" fill="#fff"/></svg>';
-const BANANA_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px"><path d="M3.5 14.5c5 4.6 12.6 2.6 15.6-5.6l.9-3.1-2 .8c-1 6.3-6.9 9.4-13.4 7.5z" fill="#f2c230" stroke="#8a5d0c" stroke-width="1.3" stroke-linejoin="round"/></svg>';
 function buildWorld() {
   if (world) { scene.remove(world); disposeTree(world); }
   world = new THREE.Group(); scene.add(world);
@@ -3299,8 +3287,6 @@ function buildWorld() {
   Object.assign(sun.shadow.camera, { left: -sr, right: sr, top: sr, bottom: -sr, far: rich ? 80 : 50 }); sun.shadow.camera.updateProjectionMatrix();
   if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
   sun.shadow.radius = rich ? 3 : 1;
-  $('#hudIcon').innerHTML = jungle ? BANANA_SVG : sea ? PEARL_SVG : '★';
-  $('#resStarLabel').textContent = jungle ? 'バナナ' : sea ? 'しんじゅ' : 'スター';
   (jungle ? buildJungle : sea ? buildSea : buildSky)();
   if (EASY) buildEdgeWalls();
   const baseAt = (x, z, fb) => { const p = platformUnder(x, z); return p ? topAt(p, Math.max(p.z - p.hd, Math.min(z, p.z + p.hd))) : fb; };
@@ -3320,9 +3306,8 @@ function buildWorld() {
   } else buildSkyWorld(rnd);
 
   for (const s of STARS) {
-    s.mesh = jungle ? new THREE.Mesh(JK.bananaGeo, JK.banana) : sea ? makePearl() : new THREE.Mesh(starGeo, starMat);
+    s.mesh = new THREE.Mesh(starGeo, starMat);   // every stage collects the same stars
     s.mesh.position.set(s.x, s.y, s.z); s.ph = rnd() * TAU; s.got = false; s.t = 0;
-    if (jungle) s.mesh.rotation.z = .4;
     s.home = { x: s.x, y: s.y, z: s.z };
     world.add(s.mesh);
   }
