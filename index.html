@@ -1183,6 +1183,41 @@ function fillModelSlots() {
     slot.add(inst);
   }
 }
+/* ---------- jungle background islands (jungle_ukijima.glb) ---------- */
+const JUNGLE_ISLAND = {
+  url: 'jungle_ukijima.glb',
+  size: [9, 14],                   // island height in world units (random within this range)
+  side: [13, 26],                  // distance from the course centre, left and right
+  lift: [17, 27],                  // height above the trail (above the treetops)
+  every: [40, 25],                 // spacing along the course: base + random
+  rotY: 0                          // extra turn applied to every island
+};
+let jungleIsland = null, jungleIslandLoading = false;
+function loadJungleIsland() {
+  if (jungleIsland || jungleIslandLoading || !THREE.GLTFLoader) return;
+  jungleIslandLoading = true;
+  new THREE.GLTFLoader().load(JUNGLE_ISLAND.url, (gltf) => {
+    const m = gltf.scene;
+    m.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      o.geometry.userData.shared = true;
+      // no normals and no metallic factor in this file: smooth normals and a matte finish so it doesn't render dark
+      if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+      o.material.metalness = 0; o.material.roughness = .8; o.material.needsUpdate = true;
+      Object.assign(o.material.userData, { shared: true, lin: true, c0: null, e0: null });
+    });
+    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3()), k = 1 / size.y;
+    m.scale.setScalar(k); m.position.set(-c.x * k, -c.y * k, -c.z * k);   // unit height, centred
+    jungleIsland = new THREE.Group(); jungleIsland.add(m);
+    fillJungleIslands();
+  }, undefined, (e) => { jungleIslandLoading = false; console.warn('jungle island could not be loaded:', e); });
+}
+function fillJungleIslands() {
+  if (!jungleIsland || !JW || !JW.islandSlots) return;
+  for (const slot of JW.islandSlots) if (!slot.children.length) slot.add(jungleIsland.clone());
+}
+
 /* ---------- jungle GLB props ----------
    jungle.glb is a single mesh holding a sheet of props side by side. On load it is cut into parts by the
    model-space box each connected piece falls in, every part is normalised (height 1, base at y = 0, centred),
@@ -2102,7 +2137,7 @@ function makeRuinIsland(s, rnd, J, vineGeos) {
 }
 function buildJungleWorld(rnd) {
   const K = jungleKit(), J = toyJungleKit(), V3 = THREE.Vector3;
-  JW = { flies: null, backdrop: null, anim: [], waterTex: J.waterTex, glbSlots: [], glbBarrels: [] };
+  JW = { flies: null, backdrop: null, anim: [], waterTex: J.waterTex, glbSlots: [], glbBarrels: [], islandSlots: [] };
   const back = new THREE.Mesh(K.backGeo, J.backdrop); back.renderOrder = -10; back.position.y = 62; world.add(back); JW.backdrop = back;
 
   const GAP = 6, BANK = 28;
@@ -2233,6 +2268,18 @@ function buildJungleWorld(rnd) {
     isl.position.set(side * (20 + rnd() * 14), pathAt(z).y + 10 + rnd() * 6, z); isl.rotation.y = rnd() * TAU; world.add(isl);
     jungleSlot('arch', isl.position.x, isl.position.y - .1, z, -side * Math.PI / 2 + Math.PI / 2, s * 1.2);
     for (let k = 0; k < 3; k++) { const a = rnd() * TAU, x = isl.position.x + Math.cos(a) * s * .8, zz = z + Math.sin(a) * s * .8, y0 = isl.position.y - s * .3; addVine([new V3(x, y0, zz), new V3(x + .3, y0 - 2, zz), new V3(x - .2, y0 - 3.5 - rnd() * 2, zz + .2)], .07, false); }
+  }
+  // big floating jungle islands (jungle_ukijima.glb) drifting in the background on both sides
+  {
+    const C = JUNGLE_ISLAND, rr = (a) => a[0] + rnd() * (a[1] - a[0]);
+    for (let z = 0, i = 0; z > goalZ - 60; z -= C.every[0] + rnd() * C.every[1], i++) {
+      const side = i % 2 ? 1 : -1, h = rr(C.size), slot = new THREE.Group();
+      slot.scale.setScalar(h); slot.rotation.y = rnd() * TAU + C.rotY;
+      slot.position.set(pathAt(z).x + side * rr(C.side), pathAt(z).y + rr(C.lift), z);
+      world.add(slot); JW.islandSlots.push(slot);
+      JW.anim.push({ kind: 'bob', m: slot, y: slot.position.y, ph: rnd() * TAU, a: .6 });
+    }
+    loadJungleIsland(); fillJungleIslands();
   }
   // a distant waterfall in a mossy cliff, beyond the far trees
   for (let z = -120; z > goalZ; z -= 200) for (const s of [-1, 1]) {
