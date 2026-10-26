@@ -1183,6 +1183,87 @@ function fillModelSlots() {
     slot.add(inst);
   }
 }
+/* ---------- jungle road (jungle_road.glb) ----------
+   The model is a strip of two grassy floating islands joined by a plank bridge, laid along its x axis with the
+   walking surface at y = 0. It is cut into slices by x; the trail is rebuilt from those slices: every path stretch
+   becomes [back cap][middle slices...][front cap], every bridge stretch a run of bridge slices, each stretched to the
+   stretch's width and fitted to its length. Physics never changes: only the look of the trail is replaced. */
+const JUNGLE_ROAD = {
+  url: 'jungle_road.glb',
+  // slices [x0, x1] in model space (forward along the course = model +x)
+  slices: { capBack: [-.5, -.3], midA: [-.3, -.12], midB: [.12, .25], bridge: [-.03, .12], capFront: [.25, .5] },
+  pathCenterZ: .03,   // model z of the middle of the walkable band
+  pathWidth: .26,     // model width that maps onto a stretch's full width
+  bridgeCenterZ: .05, bridgeWidth: .2,
+  heightScale: .75,   // vertical scale relative to the horizontal one (lower = flatter islands)
+  overlap: 1.06,      // slices are stretched a little so their cut edges overlap
+  capMinLen: 10,      // a stretch needs at least this length to get rounded island ends
+  propMaxY: .035,     // model-space height above which pieces are dropped (palms, posts)
+  bandMaxY: .015, bandHalf: .11  // nothing taller than this may stand within the walkable band
+};
+let jungleRoad = null, jungleRoadLoading = false;
+function loadJungleRoad() {
+  if (jungleRoad || jungleRoadLoading || !THREE.GLTFLoader) return;
+  jungleRoadLoading = true;
+  new THREE.GLTFLoader().load(JUNGLE_ROAD.url, (gltf) => {
+    let srcMesh = null; gltf.scene.traverse(o => { if (o.isMesh && !srcMesh) srcMesh = o; });
+    srcMesh.updateWorldMatrix(true, false);
+    const geo = srcMesh.geometry.clone(); geo.applyMatrix4(srcMesh.matrixWorld);
+    const pos = geo.attributes.position, uv = geo.attributes.uv, idx = geo.index ? geo.index.array : null, nT = (idx ? idx.length : pos.count) / 3, vi = (t, k) => idx ? idx[t * 3 + k] : t * 3 + k;
+    const mat = srcMesh.material;
+    mat.metalness = 0; mat.roughness = .8; mat.side = THREE.DoubleSide; mat.needsUpdate = true;
+    Object.assign(mat.userData, { shared: true, lin: true, c0: null, e0: null });
+    jungleRoad = { mat };
+    for (const [name, [x0, x1]] of Object.entries(JUNGLE_ROAD.slices)) {
+      const R = JUNGLE_ROAD, cz = name === 'bridge' ? R.bridgeCenterZ : R.pathCenterZ, mx = (x0 + x1) / 2, p = [], u = [];
+      for (let t = 0; t < nT; t++) {
+        let cx = 0, cy = 0, czT = 0; for (let k = 0; k < 3; k++) { const i = vi(t, k); cx += pos.getX(i) / 3; cy += pos.getY(i) / 3; czT += pos.getZ(i) / 3; }
+        if (cx < x0 || cx >= x1) continue;
+        // keep the ground: drop tall props (palms, posts, crystals) and anything standing on the walkable band
+        if (cy > R.propMaxY || (cy > R.bandMaxY && Math.abs(czT - cz) < R.bandHalf)) continue;
+        for (let k = 0; k < 3; k++) { const i = vi(t, k); p.push(pos.getX(i) - mx, pos.getY(i), pos.getZ(i) - cz); u.push(uv.getX(i), uv.getY(i)); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(u, 2));
+      g.computeVertexNormals(); g.userData.shared = true; g.userData.len = x1 - x0;
+      jungleRoad[name] = g;
+    }
+    fillJungleRoad();
+  }, undefined, (e) => { jungleRoadLoading = false; console.warn('jungle road could not be loaded:', e); });
+}
+function fillJungleRoad() {
+  if (!jungleRoad || !JW || !JW.roadFallback || JW.roadFilled) return;
+  JW.roadFilled = true;
+  const R = JUNGLE_ROAD, lists = {}, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, 'YXZ'), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const put = (name, x, y, z, tilt, len, width) => {
+    const g = jungleRoad[name], s = width / (name === 'bridge' ? R.bridgeWidth : R.pathWidth);
+    e.set(0, Math.PI / 2, tilt); q.setFromEuler(e);   // model +x runs forward (world -z); roll about the model's z tilts it up the ramp
+    (lists[name] = lists[name] || []).push(m.compose(v.set(x, y, z), q, sc.set(len / g.userData.len * R.overlap, s * R.heightScale, s)).clone());
+  };
+  for (const p of P) {
+    if (p.mv || p.style === 'raft') continue;
+    const tilt = Math.atan(p.k), L = p.hd * 2, W = p.hw * 2, bridge = p.style === 'bridge' || p.style === 'plank';
+    const run = [];
+    if (bridge) { const n = Math.max(1, Math.round(L / (jungleRoad.bridge.userData.len * W / R.bridgeWidth))); for (let i = 0; i < n; i++) run.push(['bridge', L / n]); }
+    else {
+      const s = W / R.pathWidth, unit = jungleRoad.midA.userData.len * s, caps = L >= R.capMinLen;
+      const capB = caps ? jungleRoad.capBack.userData.len * s : 0, capF = caps ? jungleRoad.capFront.userData.len * s : 0, rest = Math.max(0, L - capB - capF);
+      const n = Math.max(caps ? 0 : 1, Math.round(rest / unit)), k = (L) / Math.max(1e-6, capB + capF + n * unit);
+      if (caps) run.push(['capBack', capB * k]);
+      for (let i = 0; i < n; i++) run.push([i % 2 ? 'midB' : 'midA', unit * k]);
+      if (caps) run.push(['capFront', capF * k]);
+    }
+    let z = p.z + p.hd;
+    for (const [name, len] of run) { const zc = z - len / 2; put(name, p.x, topAt(p, zc), zc, tilt, len * Math.hypot(1, p.k), W); z -= len; }
+  }
+  for (const o of JW.roadFallback) { world.remove(o); disposeTree(o); }   // the stand-in trail is no longer needed
+  for (const [name, mats] of Object.entries(lists)) {
+    const inst = new THREE.InstancedMesh(jungleRoad[name], jungleRoad.mat, mats.length);
+    mats.forEach((mm, i) => inst.setMatrixAt(i, mm));
+    inst.castShadow = inst.receiveShadow = true;
+    world.add(inst);
+  }
+}
+
 /* ---------- jungle background islands (jungle_ukijima.glb) ---------- */
 const JUNGLE_ISLAND = {
   url: 'jungle_ukijima.glb',
@@ -2159,8 +2240,9 @@ function buildJungleWorld(rnd) {
     centers.push({ x, y: y + s * .25, z, s: s * .3, col: c === 0xffd23f ? 0xff8a4c : 0xffd23f });
   };
 
-  // the trail: narrow stretches are flattened logs wrapped in vines; wide ones are mossy grey stone slabs
-  const planks = [], ropes = [], ends = [], moss = [];
+  // the trail: narrow stretches are flattened logs wrapped in vines; wide ones are mossy grey stone slabs.
+  // This is only the stand-in shown until jungle_road.glb arrives (see JUNGLE_ROAD), which then replaces it.
+  const planks = [], ropes = [], ends = [], moss = [], trailFrom = world.children.length;
   P.forEach((p, idx) => {
     if (p.style === 'raft') {
       const g = new THREE.Group();
@@ -2205,6 +2287,8 @@ function buildJungleWorld(rnd) {
   placed(J.blob, J.rope, ropes, (q, o) => { o.position.set(q.x, q.y + .4, q.z); o.scale.setScalar(.28); });
   { const eg = new THREE.PlaneGeometry(1, 1); placed(eg, J.logEnd, ends, (q, o) => { o.position.set(q.x, q.y, q.z); o.rotation.y = q.sz > 0 ? 0 : Math.PI; o.scale.set(q.w, q.h, 1); }); }
   placedLin(J.blob, J.blobMat, moss, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .7, q.s * 1.4); });
+  JW.roadFallback = world.children.slice(trailFrom).filter(o => !P.some(p => p.mv && p.mesh === o));
+  const trailVines = vineGeos.length;   // vines wrapped round the stand-in logs are dropped too once the road is in
 
   // ravine walls: mossy banks with brown earth sides, a soft hedge along the rim
   const sides = [], tops = [];
@@ -2318,7 +2402,11 @@ function buildJungleWorld(rnd) {
   placedLin(J.fern, J.leafMat, ferns, (q, o) => { o.position.set(q.x, q.y, q.z); o.rotation.set(0, q.yaw, 0); o.scale.set(q.s, q.s, q.s); });
   placedLin(J.blobTiny, J.blobMat, petals, (q, o) => { o.position.set(q.x, q.y, q.z); o.rotation.set(0, -q.a, 0); o.scale.set(q.s * .55, q.s * .14, q.s * .38); });
   placedLin(J.blobTiny, J.blobMat, centers, (q, o) => { o.position.set(q.x, q.y, q.z); o.scale.set(q.s, q.s * .6, q.s); });
-  if (vineGeos.length) world.add(new THREE.Mesh(mergeGeos(vineGeos), J.vine));
+  if (vineGeos.length) {
+    if (trailVines) { const tv = new THREE.Mesh(mergeGeos(vineGeos.splice(0, trailVines)), J.vine); world.add(tv); JW.roadFallback.push(tv); }
+    if (vineGeos.length) world.add(new THREE.Mesh(mergeGeos(vineGeos), J.vine));
+  }
+  loadJungleRoad(); fillJungleRoad();
 
   // jump signs and arrows painted on the trail
   for (const s of SIGNS) {
